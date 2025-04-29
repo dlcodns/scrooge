@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart'; // 추가
 import 'profile.dart';
 import 'edit_password.dart';
-import 'trash.dart';
+import 'trash_manage.dart';
 
 class MyPageScreen extends StatefulWidget {
   @override
