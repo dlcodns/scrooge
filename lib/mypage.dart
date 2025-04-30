@@ -1,9 +1,14 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // 추가
-import 'profile.dart';
-import 'edit_password.dart';
-import 'trash_manage.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'notification.dart';
+
+class Item {
+  final String name;
+  final DateTime expiryDate;
+
+  Item({required this.name, required this.expiryDate});
+}
 
 class MyPageScreen extends StatefulWidget {
   @override
@@ -15,217 +20,142 @@ class _MyPageScreenState extends State<MyPageScreen> {
   int selectedDay = 3;
   String selectedPeriod = '오후';
   int selectedHour = 8;
+  List<String> notificationSummaries = [];
 
   List<int> days = [1, 2, 3, 4, 5, 6, 7];
   List<String> periods = ['오전', '오후'];
   List<int> hours = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
+  List<Item> items = [
+    Item(name: '우유', expiryDate: DateTime.now().add(Duration(days: 7))),
+    Item(name: '계란', expiryDate: DateTime.now().add(Duration(days: 10))),
+  ];
+
+  void scheduleExpiryNotification(Item item) async {
+    final scheduled = item.expiryDate.subtract(Duration(days: selectedDay));
+    final hour = selectedPeriod == '오후' ? selectedHour + 12 : selectedHour;
+    final scheduledTime = DateTime(
+      scheduled.year,
+      scheduled.month,
+      scheduled.day,
+      hour,
+      0,
+    );
+
+    await FlutterLocalNotification.scheduleNotification(scheduledTime);
+
+    setState(() {
+      notificationSummaries.add("${item.name} - $selectedDay일 전 $selectedPeriod $selectedHour시 알림 설정됨");
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("알림이 예약되었습니다.")),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    FlutterLocalNotification.init();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text("마이페이지",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
+        title: Text('마이페이지'),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListTile(
-              leading: Icon(Icons.person, color: Colors.black),
-              title: Text("내 프로필 정보",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              trailing: TextButton(
-                onPressed: () {},
-                child: Text("로그아웃",
-                    style: TextStyle(
-                        color: Colors.black, fontWeight: FontWeight.bold)),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfileDetailScreen()),
-                );
-              },
-            ),
-            Divider(
-              thickness: 1.5,
-              color: Colors.black,
-            ),
-            ListTile(
-              leading: Icon(Icons.notifications, color: Colors.black),
-              title: Text("유효기간 만료 알림 설정",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                setState(() {
-                  showNotificationSetting = !showNotificationSetting;
-                });
-              },
-            ),
-            if (showNotificationSetting)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12),
-                child: Column(
-                  children: [
-                    Container(
-                      height: 150,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Expanded(
-                            child: CupertinoPicker(
-                              scrollController: FixedExtentScrollController(
-                                initialItem: days.indexOf(selectedDay),
+      body: ListView(
+        children: [
+          ...items.map((item) => ListTile(
+                title: Text(item.name),
+                subtitle: Text("유효기간: \${item.expiryDate.toLocal()}"),
+                trailing: IconButton(
+                  icon: Icon(Icons.notifications),
+                  onPressed: () {
+                    setState(() {
+                      showNotificationSetting = true;
+                    });
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: Text('알림 설정 - ${item.name}'),
+                        content: SizedBox(
+                          height: 200,
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: CupertinoPicker(
+                                  scrollController: FixedExtentScrollController(
+                                    initialItem: days.indexOf(selectedDay),
+                                  ),
+                                  itemExtent: 32,
+                                  onSelectedItemChanged: (i) => selectedDay = days[i],
+                                  children: days
+                                      .map((d) => Text("$d일 전", style: GoogleFonts.jua(fontSize: 18)))
+                                      .toList(),
+                                ),
                               ),
-                              itemExtent: 32,
-                              magnification: 1.2,
-                              useMagnifier: true,
-                              onSelectedItemChanged: (index) {
-                                setState(() {
-                                  selectedDay = days[index];
-                                });
-                              },
-                              children: days
-                                  .map((d) => Center(
-                                        child: Text(
-                                          "$d일 전",
-                                          style: GoogleFonts.jua(
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      ))
-                                  .toList(),
-                            ),
-                          ),
-                          Expanded(
-                            child: CupertinoPicker(
-                              scrollController: FixedExtentScrollController(
-                                initialItem: periods.indexOf(selectedPeriod),
+                              Expanded(
+                                child: CupertinoPicker(
+                                  scrollController: FixedExtentScrollController(
+                                    initialItem: periods.indexOf(selectedPeriod),
+                                  ),
+                                  itemExtent: 32,
+                                  onSelectedItemChanged: (i) => selectedPeriod = periods[i],
+                                  children: periods
+                                      .map((p) => Text(p, style: GoogleFonts.jua(fontSize: 18)))
+                                      .toList(),
+                                ),
                               ),
-                              itemExtent: 32,
-                              magnification: 1.2,
-                              useMagnifier: true,
-                              onSelectedItemChanged: (index) {
-                                setState(() {
-                                  selectedPeriod = periods[index];
-                                });
-                              },
-                              children: periods
-                                  .map((p) => Center(
-                                        child: Text(
-                                          p,
-                                          style: GoogleFonts.jua(
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      ))
-                                  .toList(),
-                            ),
-                          ),
-                          Expanded(
-                            child: CupertinoPicker(
-                              scrollController: FixedExtentScrollController(
-                                initialItem: hours.indexOf(selectedHour),
+                              Expanded(
+                                child: CupertinoPicker(
+                                  scrollController: FixedExtentScrollController(
+                                    initialItem: hours.indexOf(selectedHour),
+                                  ),
+                                  itemExtent: 32,
+                                  onSelectedItemChanged: (i) => selectedHour = hours[i],
+                                  children: hours
+                                      .map((h) => Text("$h시", style: GoogleFonts.jua(fontSize: 18)))
+                                      .toList(),
+                                ),
                               ),
-                              itemExtent: 32,
-                              magnification: 1.2,
-                              useMagnifier: true,
-                              onSelectedItemChanged: (index) {
-                                setState(() {
-                                  selectedHour = hours[index];
-                                });
-                              },
-                              children: hours
-                                  .map((h) => Center(
-                                        child: Text(
-                                          "$h시",
-                                          style: GoogleFonts.jua(
-                                            fontSize: 18,
-                                          ),
-                                        ),
-                                      ))
-                                  .toList(),
-                            ),
+                            ],
                           ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              scheduleExpiryNotification(item);
+                            },
+                            child: Text("확인"),
+                          )
                         ],
                       ),
-                    ),
-                    SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          showNotificationSetting = false;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "$selectedDay일 전 $selectedPeriod $selectedHour시에 알림이 설정되었습니다.",
-                            ),
-                          ),
-                        );
-                      },
-                      child: Text("확인",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo,
-                        minimumSize: Size(double.infinity, 40),
-                      ),
-                    )
-                  ],
+                    );
+                  },
                 ),
-              ),
-            ListTile(
-              leading: Icon(Icons.lock, color: Colors.black),
-              title: Text("비밀번호 변경",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => EditPasswordScreen()),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.delete, color: Colors.black),
-              title: Text("휴지통", style: TextStyle(fontWeight: FontWeight.bold)),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => TrashScreen()),
-                );
-              },
-            ),
+              )),
+          if (notificationSummaries.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: TextButton(
-                  onPressed: () {},
-                  child: Text("탈퇴하기", style: TextStyle(color: Colors.grey)),
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.notifications_active, color: Colors.indigo),
+                      SizedBox(width: 10),
+                      Text("알림 설정 내역", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  ...notificationSummaries.map((s) => Text(s)),
+                ],
               ),
-            ),
-          ],
-        ),
+            )
+        ],
       ),
     );
   }
