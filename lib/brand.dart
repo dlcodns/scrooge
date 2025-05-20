@@ -107,7 +107,6 @@ class Brand extends StatelessWidget {
                 _buildRoundedBox(context, Brand(), 3),
               ],
             ),
-            // 여기에 다른 내용 추가 가능
           ],
         ),
       ),
