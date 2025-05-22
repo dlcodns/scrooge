@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'time.dart';
 import 'group.dart';
+import 'brand_gallery.dart';
 
 Widget _buildRoundedBox(
   BuildContext context,
@@ -54,12 +55,20 @@ Widget _buildRoundedBox(
 class Brand extends StatelessWidget {
   const Brand({super.key});
 
+  final List<Map<String, dynamic>> brandInfo = const [
+    {"name": "스타벅스", "image": "assets/starbucks.png"},
+    {"name": "투썸플레이스", "image": "assets/twosome.png"},
+    {"name": "편의점", "image": "assets/GS25.png"},
+    {"name": "맥도날드", "image": "assets/mcdonalds.png"},
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final double itemSize = MediaQuery.of(context).size.width / 3;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 210, 101, 101),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -107,6 +116,53 @@ class Brand extends StatelessWidget {
                 _buildRoundedBox(context, Brand(), 3),
               ],
             ),
+            const SizedBox(height: 16),
+
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 3,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 36,
+                childAspectRatio: 0.7, // ✅ 텍스트 포함해서 높이 확보
+                children: brandInfo.map((brand) {
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BrandGalleryPage(brandName: brand["name"]),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      children: [
+                        Container(
+                          width: itemSize,
+                          height: itemSize,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          clipBehavior: Clip.hardEdge,
+                          child: Image.asset(
+                            brand["image"],
+                            fit: BoxFit.cover,
+                            alignment: Alignment.topCenter,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          brand["name"],
+                          style: const TextStyle(fontSize: 14),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            )
+
           ],
         ),
       ),
