@@ -12,6 +12,7 @@ class GroupGalleryPage extends StatefulWidget {
 
 class _GroupGalleryPageState extends State<GroupGalleryPage> {
   bool isGridView = true;
+  bool showDrawer = false;
 
   final Map<String, List<Map<String, String>>> groupedCoupons = {
     "1월 31일 만료": [
@@ -26,6 +27,8 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
     ]
   };
 
+  final List<String> members = ["박형우", "이채운", "송영은"];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,50 +36,86 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true, // 중앙 정렬
-        leading: const BackButton(color: Colors.black), // 왼쪽 고정
-        title: Center(
-          child: Text(
-            widget.groupName,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          widget.groupName,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {},
+            onPressed: () {
+              setState(() {
+                showDrawer = true;
+              });
+            },
           ),
         ],
       ),
-
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
+      body: Stack(
         children: [
-          _buildViewToggleButtons(),
-          const SizedBox(height: 16),
-          ...groupedCoupons.entries.map((entry) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              _buildViewToggleButtons(),
+              const SizedBox(height: 16),
+              ...groupedCoupons.entries.map((entry) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(entry.key, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    isGridView
+                        ? Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: entry.value.map((item) => _buildMaxWidthSquareImage(item)).toList(),
+                          )
+                        : Column(
+                            children: entry.value.map((item) => _buildCouponListTile(item)).toList(),
+                          ),
+                    const SizedBox(height: 20),
+                  ],
+                );
+              }).toList(),
+            ],
+          ),
+          if (showDrawer)
+            Stack(
               children: [
-                Text(entry.key, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                isGridView
-                    ? Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: entry.value.map((item) => _buildMaxWidthSquareImage(item)).toList(),
-                      )
-                    : Column(
-                        children: entry.value.map((item) => _buildCouponListTile(item)).toList(),
-                      ),
-                const SizedBox(height: 20),
+                GestureDetector(
+                  onTap: () => setState(() => showDrawer = false),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.4,
+                    height: MediaQuery.of(context).size.height - kToolbarHeight,
+                    color: Colors.white,
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("친구 목록", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+                        const SizedBox(height: 16),
+                        ...members.map((name) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(name, style: const TextStyle(fontSize: 16, color: Colors.black)),
+                            )),
+                      ],
+                    ),
+                  ),
+                ),
               ],
-            );
-          }).toList(),
+            ),
         ],
       ),
     );
