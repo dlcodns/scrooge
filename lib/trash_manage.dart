@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'group_gallery.dart'; // 콘갤러리
+import 'screens/friend_list_screen.dart'; // 친구목록
 
-class TrashScreen extends StatelessWidget { // ← 클래스 이름 변경!
+class TrashScreen extends StatelessWidget {
   final List<Map<String, String>> trashList = [
     {
       'date': '2025.01.26',
@@ -80,6 +82,23 @@ class TrashScreen extends StatelessWidget { // ← 클래스 이름 변경!
           BottomNavigationBarItem(icon: Icon(Icons.photo_album), label: '콘갤러리'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: '친구 목록'),
         ],
+        onTap: (index) {
+          if (index == 0) {
+            // 콘갤러리 이동
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => GroupGalleryPage(groupName: '콘갤러리'), // 파라미터 필요시 전달
+              ),
+            );
+          } else if (index == 1) {
+            // 친구목록 이동
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => FriendListScreen()),
+            );
+          }
+        },
       ),
     );
   }

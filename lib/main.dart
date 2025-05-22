@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
-import 'mypage.dart';
-import 'notification.dart';
+import 'firstpage.dart'; // firstpage.dart import
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await FlutterLocalNotification.init();
+void main() {
   runApp(const MyApp());
 }
 
@@ -14,11 +11,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: MyPageScreen(),
+      title: 'Navigator Demo',
+      home: const FirstPage(), // 첫 화면을 FirstPage로 지정
     );
   }
 }
