@@ -73,54 +73,109 @@ class _TimeState extends State<Time> {
     'CU',
     'GS25',
     '올리브영',
-    '스타벅스',
+    'kakaotalk',
+    'BBQ',
   ];
 
   Future<void> _scanGallery() async {
-    final permission = await PhotoManager.requestPermissionExtend();
-    if (!permission.isAuth) return;
-
-    final albums = await PhotoManager.getAssetPathList(
-      type: RequestType.image,
-      onlyAll: true,
-    );
-
-    final List<AssetEntity> allImages = await albums.first.getAssetListPaged(
-      page: 0,
-      size: 100,
-    );
-
-    final List<AssetEntity> filtered = [];
-
-    for (final image in allImages) {
-      final file = await image.originFile;
-      if (file == null) continue;
-
-      final inputImage = InputImage.fromFile(file);
-      final recognizer = TextRecognizer(script: TextRecognitionScript.korean);
-      final result = await recognizer.processImage(inputImage);
-      await recognizer.close();
-
-      final text = result.text;
-      if (keywords.any((k) => text.contains(k))) {
-        filtered.add(image);
+    try {
+      final permission = await PhotoManager.requestPermissionExtend();
+      if (!permission.isAuth) {
+        debugPrint('❌ 권한 없음: 갤러리 접근 거부됨');
+        return;
+      } else {
+        debugPrint('✅ 권한 허용됨: 갤러리 접근 가능');
       }
+
+      final DateTime oneMonthAgo = DateTime.now().subtract(const Duration(days: 3));
+
+      final FilterOptionGroup filterOption = FilterOptionGroup(
+        imageOption: const FilterOption(needTitle: false),
+        orders: [
+          const OrderOption(type: OrderOptionType.createDate, asc: false),
+        ],
+        createTimeCond: DateTimeCond(
+          min: oneMonthAgo,
+          max: DateTime.now(),
+        ),
+      );
+
+      final albums = await PhotoManager.getAssetPathList(
+        type: RequestType.image,
+        filterOption: filterOption,
+        onlyAll: true,
+      );
+
+      if (albums.isEmpty) {
+        debugPrint('⚠️ 1개월 이내 이미지 없음');
+        return;
+      }
+
+      final List<AssetEntity> recentImages = await albums.first.getAssetListPaged(
+        page: 0,
+        size: 99999,
+      );
+
+      debugPrint('📅 한 달 이내 이미지 수: ${recentImages.length}');
+
+
+      final List<AssetEntity> filtered = [];
+      int index = 0;
+
+      for (final image in recentImages) {
+        try {
+          if (image.createDateTime.isBefore(oneMonthAgo)) {
+            debugPrint('⏳ $index번 이미지 제외: 1개월 이전');
+            index++;
+            continue;
+          }
+
+          final file = await image.originFile;
+          if (file == null) {
+            debugPrint('🚫 $index번 이미지 파일 없음');
+            index++;
+            continue;
+          }
+
+          final inputImage = InputImage.fromFile(file);
+          final recognizer = TextRecognizer();
+          final result = await recognizer.processImage(inputImage);
+
+          final text = result.text;
+          debugPrint('🔍 $index번 OCR 결과: $text');
+
+          if (keywords.any((k) => text.contains(k))) {
+            filtered.add(image);
+            debugPrint('✅ $index번 이미지 추가됨');
+          }
+
+          await recognizer.close();
+        } catch (e) {
+          debugPrint('❌ $index번 이미지 처리 중 오류: $e');
+        }
+
+        index++;
+      }
+
+      debugPrint('📦 최종 필터링 이미지 수: ${filtered.length}');
+
+      setState(() {
+        gifticonImages = filtered;
+      });
+    } catch (e) {
+      debugPrint('🚨 갤러리 전체 처리 실패: $e');
     }
-
-    // 최신순 정렬
-    filtered.sort((a, b) => b.createDateTime.compareTo(a.createDateTime));
-
-    setState(() {
-      gifticonImages = filtered;
-    });
   }
+
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 210, 101, 101),
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -187,7 +242,7 @@ class _TimeState extends State<Time> {
                               return FutureBuilder<Uint8List?>(
                                 future: gifticonImages[index]
                                     .thumbnailDataWithSize(
-                                      const ThumbnailSize(200, 200),
+                                      const ThumbnailSize(500, 500),
                                     ),
                                 builder: (_, snapshot) {
                                   if (snapshot.connectionState ==
@@ -196,10 +251,32 @@ class _TimeState extends State<Time> {
                                       child: CircularProgressIndicator(),
                                     );
                                   } else if (snapshot.hasData) {
-                                    return Image.memory(
-                                      snapshot.data!,
-                                      fit: BoxFit.cover,
-                                    );
+                                      return GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => GifticonViewer(asset: gifticonImages[index]),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            color: Colors.grey.shade200,
+                                          ),
+                                          clipBehavior: Clip.hardEdge,
+                                          child: AspectRatio(
+                                            aspectRatio: 1, // ✅ 정사각형
+                                            child: Image.memory(
+                                              snapshot.data!,
+                                              fit: BoxFit.cover,
+                                              alignment: Alignment.topCenter, // ✅ 윗부분 기준
+                                            ),
+                                          ),
+                                        ),
+                                      );
+
                                   } else {
                                     return const Icon(
                                       Icons.image_not_supported,
@@ -266,3 +343,51 @@ class _TimeState extends State<Time> {
     );
   }
 }
+
+class GifticonViewer extends StatelessWidget {
+  final AssetEntity asset;
+
+  const GifticonViewer({super.key, required this.asset});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<File?>(
+      future: asset.originFile,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
+          );
+        } else if (snapshot.hasData && snapshot.data != null) {
+          return Scaffold(
+            backgroundColor: Colors.black,
+            appBar: AppBar(
+              backgroundColor: Colors.black,
+              iconTheme: const IconThemeData(color: Colors.white),
+              elevation: 0,
+            ),
+            body: Center(
+              child: InteractiveViewer(
+                minScale: 1,
+                maxScale: 5,
+                child: Image.file(
+                  snapshot.data!,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          );
+        } else {
+          return const Scaffold(
+            backgroundColor: Colors.black,
+            body: Center(
+              child: Icon(Icons.broken_image, color: Colors.white),
+            ),
+          );
+        }
+      },
+    );
+  }
+}
+
