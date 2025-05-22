@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'ImageDetailPage.dart';
 
 class GroupGalleryPage extends StatefulWidget {
@@ -27,7 +28,16 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
     ]
   };
 
-  final List<String> members = ["박형우", "이채운", "송영은"];
+  final List<String> members = ["박형우", "송영은"];
+
+  void _pickGifticonImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked != null) {
+      // TODO: 저장 및 표시 추가
+      debugPrint("선택된 이미지 경로: ${picked.path}");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,36 +96,46 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
             ],
           ),
           if (showDrawer)
-            Stack(
-              children: [
-                GestureDetector(
-                  onTap: () => setState(() => showDrawer = false),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.5),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.4,
-                    height: MediaQuery.of(context).size.height - kToolbarHeight,
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text("친구 목록", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
-                        const SizedBox(height: 16),
-                        ...members.map((name) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: Text(name, style: const TextStyle(fontSize: 16, color: Colors.black)),
-                            )),
-                      ],
+            Positioned.fill(
+              top: kToolbarHeight,
+              child: Stack(
+                children: [
+                  GestureDetector(
+                    onTap: () => setState(() => showDrawer = false),
+                    child: Container(
+                      color: Colors.black.withOpacity(0.5),
                     ),
                   ),
-                ),
-              ],
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.4,
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text("친구 목록", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+                          const SizedBox(height: 16),
+                          ...members.map((name) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Text(name, style: const TextStyle(fontSize: 16, color: Colors.black)),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: GestureDetector(
+              onTap: _pickGifticonImage,
+              child: Image.asset('assets/gift.png', width: 56, height: 56),
+            ),
+          ),
         ],
       ),
     );
