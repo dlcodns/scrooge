@@ -36,13 +36,22 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
-        title: const Text('회원가입', style: TextStyle(color: Colors.black)),
-        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          '회원가입',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
+
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -169,9 +178,11 @@ class _SignupScreenState extends State<SignupScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      Navigator.pushNamed(context, '/signup_complete');
-                    }
+                    Navigator.pushNamed(context, '/signup_complete');
+                    //ui 통일을 위해 잠시 주석 처리 합니다다
+                    // if (_formKey.currentState!.validate()) {
+                    //   Navigator.pushNamed(context, '/signup_complete');
+                    // }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF577BE5),

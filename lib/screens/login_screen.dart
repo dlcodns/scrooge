@@ -52,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
                      context,
                      MaterialPageRoute(builder: (context) => Group()),
                    );
+                //ui 통일을 위해 잠시 주석 처리 합니다다
                 // if (_idController.text == 'test123' &&
                 //     _pwController.text == 'Test123!') {
                 //   // ⭐ 여기서 group.dart로 이동!
