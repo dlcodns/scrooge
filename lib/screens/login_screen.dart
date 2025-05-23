@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:scrooge/group.dart';
 
-
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -50,13 +49,11 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: () {
                 if (_idController.text == 'test123' &&
-                    _pwController.text == 'Asdfhjkl123!') {
+                    _pwController.text == 'Test123!') {
                   // ⭐ 여기서 group.dart로 이동!
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => Group(),
-                    ),
+                    MaterialPageRoute(builder: (context) => Group()),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -75,25 +72,19 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 TextButton(
                   onPressed: () {},
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.black,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.black),
                   child: const Text('ID 찾기'),
                 ),
                 const Text('|'),
                 TextButton(
                   onPressed: () {},
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.black,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.black),
                   child: const Text('PW 찾기'),
                 ),
                 const Text('|'),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/signup'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.black,
-                  ),
+                  style: TextButton.styleFrom(foregroundColor: Colors.black),
                   child: const Text('회원가입'),
                 ),
               ],
