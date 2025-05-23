@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'ImageDetailPage.dart';
+import 'image_ocr.dart';
 
 class GroupGalleryPage extends StatefulWidget {
   final String groupName;

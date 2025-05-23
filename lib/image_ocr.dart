@@ -42,7 +42,7 @@ class _CloudVisionOCRPageState extends State<CloudVisionOCRPage> {
   Future<void> _callGoogleVisionAPI(Uint8List imageBytes) async {
     final base64Image = base64Encode(imageBytes);
 
-    const apiKey = ''; // 🔐 실제 API 키로 대체할 것
+    const apiKey = 'AIzaSyDtG9EgGBrKJzkWuAfNLabWZwNiqhV2tM8'; // 🔐 실제 API 키로 대체할 것
     final url = Uri.parse('https://vision.googleapis.com/v1/images:annotate?key=$apiKey');
 
     final requestPayload = {
