@@ -55,16 +55,19 @@ class _FavoriteGiftcornScreenState extends State<FavoriteGiftcornScreen> {
           horizontal: screenWidth * 0.06,
           vertical: screenHeight * 0.015,
         ),
-        child: Column(
+               child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            
+            const SizedBox(height: 24),
             Center(
               child: Text(
                 "${widget.nickname}님이 선호하는\n기프티콘을 알려주세요!",
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: screenWidth * 0.045),
+                  fontWeight: FontWeight.bold,
+                  fontSize: screenWidth * 0.045,
+                ),
               ),
             ),
             SizedBox(height: screenHeight * 0.03),
@@ -88,9 +91,7 @@ class _FavoriteGiftcornScreenState extends State<FavoriteGiftcornScreen> {
                           style: TextStyle(
                             fontSize: screenWidth * 0.04,
                             fontWeight: FontWeight.bold,
-                            color: selectedKeywords[index] != null
-                                ? Colors.black
-                                : Colors.black,
+                            color: Colors.black,
                           ),
                         ),
                       ],
@@ -99,56 +100,72 @@ class _FavoriteGiftcornScreenState extends State<FavoriteGiftcornScreen> {
                 }),
               ),
             ),
-
-            SizedBox(height: screenHeight * 0.02),
+            SizedBox(height: screenHeight * 0.04),
             Center(
               child: Text(
                 "직접 입력하거나 아래에서 선택해보세요!",
                 style: TextStyle(
-                    color: Colors.black, fontSize: screenWidth * 0.035),
-              ),
-            ),
-            SizedBox(height: screenHeight * 0.02),
-            Wrap(
-              spacing: screenWidth * 0.03,
-              runSpacing: screenHeight * 0.015,
-              children: keywords.map((text) {
-                final isSelected = selectedKeywords.contains(text);
-                return ChoiceChip(
-                  label: Text(text,
-                      style: TextStyle(
-                          fontSize: screenWidth * 0.035,
-                          color: isSelected ? Colors.white : Colors.black)),
-                  selected: isSelected,
-                  selectedColor: Colors.indigo,
-                  backgroundColor: Colors.grey[200],
-                  onSelected: (_) => toggleKeyword(text),
-                );
-              }).toList(),
-            ),
-            Spacer(),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // 저장 후 뒤로
-                },
-                child: Text("저장",
-                    style: TextStyle(
-                        fontSize: screenWidth * 0.04,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo[400],
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.2,
-                    vertical: screenHeight * 0.018,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(screenWidth * 0.03),
-                  ),
+                  color: Colors.black,
+                  fontSize: screenWidth * 0.035,
                 ),
               ),
             ),
+            SizedBox(height: screenHeight * 0.02),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Wrap(
+                  spacing: screenWidth * 0.03,
+                  runSpacing: screenHeight * 0.015,
+                  alignment: WrapAlignment.center,
+                  children: keywords.map((text) {
+                    final isSelected = selectedKeywords.contains(text);
+                    return ChoiceChip(
+                      label: Text(
+                        text,
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.035,
+                          color: isSelected ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      selected: isSelected,
+                      selectedColor: Colors.indigo,
+                      backgroundColor: Colors.grey[200],
+                      onSelected: (_) => toggleKeyword(text),
+                    );
+                  }).toList(),
+                ),
+
+                SizedBox(height: screenHeight * 0.12),
+
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context); // 저장 후 뒤로
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo[400],
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.2,
+                        vertical: screenHeight * 0.018,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                      ),
+                    ),
+                    child: Text(
+                      "저장",
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
           ],
         ),
       ),
