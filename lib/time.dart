@@ -5,7 +5,9 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'group.dart';
 import 'brand.dart';
-
+import 'screens/friend_list_screen.dart';
+import 'mypage.dart';
+import 'trash_manage.dart';
 Widget _buildRoundedBox(
   BuildContext context,
   Widget destinationPage,
@@ -188,8 +190,11 @@ class _TimeState extends State<Time> {
               IconButton(
                 icon: Image.asset('assets/trash.png'),
                 onPressed: () {
-                  // TODO: trash 버튼 기능 추가
-                },
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => TrashScreen()),
+    );
+  },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
@@ -200,7 +205,11 @@ class _TimeState extends State<Time> {
               IconButton(
                 icon: Image.asset('assets/account.png'),
                 onPressed: () {
-                  // TODO: account 버튼 기능 추가
+          // 👉 마이페이지로 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => MyPageScreen()),
+          );
                 },
               ),
             ],
@@ -330,8 +339,12 @@ class _TimeState extends State<Time> {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  // TODO: friendList 동작
-                },
+            // ✅ 여기서 친구목록으로 이동!
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => FriendListScreen()),
+            );
+          },
                 child: Center(
                   child: Image.asset('assets/friendList.png', height: 20),
                 ),
