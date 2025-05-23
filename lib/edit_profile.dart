@@ -38,12 +38,14 @@ class _FavoriteGiftcornScreenState extends State<FavoriteGiftcornScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
-        title: SizedBox.shrink(),
-        leading: BackButton(color: Colors.black),
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
       ),
+
       body: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: screenWidth * 0.06,
@@ -168,16 +170,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
-        title: Text(
-          "내 프로필 정보 수정",
-          style: TextStyle(
-              color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        leading: BackButton(color: Colors.black),
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          '내 프로필 정보 수정',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
+
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16),
         child: Column(

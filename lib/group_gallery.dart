@@ -44,6 +44,7 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -68,6 +69,7 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
           ),
         ],
       ),
+      
       body: Stack(
         children: [
           ListView(
