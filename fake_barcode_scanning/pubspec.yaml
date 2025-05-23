@@ -1,0 +1,5 @@
+name: google_mlkit_barcode_scanning
+description: Dummy placeholder to override broken package.
+version: 0.0.1
+environment:
+  sdk: ">=2.17.0 <4.0.0"
