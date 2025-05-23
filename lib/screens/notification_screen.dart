@@ -7,16 +7,20 @@ class NotificationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('알림', style: TextStyle(fontWeight: FontWeight.bold)),
-        centerTitle: true,
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          '알림',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
+
       backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12),

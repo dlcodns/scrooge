@@ -48,18 +48,22 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                if (_idController.text == 'test123' &&
-                    _pwController.text == 'Test123!') {
-                  // ⭐ 여기서 group.dart로 이동!
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => Group()),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
-                  );
-                }
+                Navigator.pushReplacement(
+                     context,
+                     MaterialPageRoute(builder: (context) => Group()),
+                   );
+                // if (_idController.text == 'test123' &&
+                //     _pwController.text == 'Test123!') {
+                //   // ⭐ 여기서 group.dart로 이동!
+                //   Navigator.pushReplacement(
+                //     context,
+                //     MaterialPageRoute(builder: (context) => Group()),
+                //   );
+                // } else {
+                //   ScaffoldMessenger.of(context).showSnackBar(
+                //     const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
+                //   );
+                // }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF577BE5),

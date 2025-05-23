@@ -5,6 +5,8 @@ import 'brand_gallery.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_manage.dart';
 import 'mypage.dart';
+
+
 Widget _buildRoundedBox(
   BuildContext context,
   Widget destinationPage,
@@ -83,11 +85,11 @@ class Brand extends StatelessWidget {
               IconButton(
                 icon: Image.asset('assets/trash.png'),
                 onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => TrashScreen()),
-    );
-  },
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                  );
+                },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
@@ -98,11 +100,11 @@ class Brand extends StatelessWidget {
               IconButton(
                 icon: Image.asset('assets/account.png'),
                 onPressed: () {
-          // 👉 마이페이지로 이동
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => MyPageScreen()),
-          );
+                  // 👉 마이페이지로 이동
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                  );
                 },
               ),
             ],

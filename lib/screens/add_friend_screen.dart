@@ -14,32 +14,53 @@ class _FriendAddScreenState extends State<FriendAddScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
-        title: const Text('친구 추가', style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          '친구 추가',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              '추가하고 싶은 친구의 ID를 입력하세요',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _controller,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
+
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '추가하고 싶은 친구의 ID를 입력하세요',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: MediaQuery.of(context).size.width * 0.04,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            GestureDetector(
+          ),
+
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: GestureDetector(
               onTap: () {
                 Navigator.pushReplacementNamed(
                   context,
@@ -49,13 +70,14 @@ class _FriendAddScreenState extends State<FriendAddScreen> {
               },
               child: const Icon(
                 Icons.arrow_forward,
-                size: 32,
+                size: 40,
                 color: Colors.blue,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+
     );
   }
 }
