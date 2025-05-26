@@ -83,24 +83,26 @@ class Group extends StatelessWidget {
               IconButton(
                 icon: Image.asset('assets/trash.png'),
                 onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => TrashScreen()),
-    );
-  },
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                  );
+                },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushNamed(context, '/notifications');
+                },
               ),
               IconButton(
                 icon: Image.asset('assets/account.png'),
                 onPressed: () {
-          // 👉 마이페이지로 이동
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => MyPageScreen()),
-          );
+                  // 👉 마이페이지로 이동
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                  );
                 },
               ),
             ],
@@ -132,29 +134,39 @@ class Group extends StatelessWidget {
                     crossAxisCount: 3,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    children: groupInfo.map((group) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => GroupGalleryPage(groupName: group["name"]),
+                    children:
+                        groupInfo.map((group) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => GroupGalleryPage(
+                                        groupName: group["name"],
+                                      ),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              children: [
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: Colors.grey.shade200,
+                                  child: Text(
+                                    group["emoji"],
+                                    style: const TextStyle(fontSize: 28),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  group["name"],
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
                             ),
                           );
-                        },
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 30,
-                              backgroundColor: Colors.grey.shade200,
-                              child: Text(group["emoji"], style: const TextStyle(fontSize: 28)),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(group["name"], style: const TextStyle(fontSize: 14)),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                        }).toList(),
                   ),
                 ),
               ],
@@ -215,12 +227,12 @@ class Group extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-            // ✅ 여기서 친구목록으로 이동!
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => FriendListScreen()),
-            );
-          },
+                  // ✅ 여기서 친구목록으로 이동!
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => FriendListScreen()),
+                  );
+                },
                 child: Center(
                   child: Image.asset('assets/friendList.png', height: 20),
                 ),

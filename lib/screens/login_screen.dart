@@ -22,11 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
-              '알뜰티콘',
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 32),
             TextField(
               controller: _idController,
               decoration: const InputDecoration(labelText: '아이디를 입력해주세요'),
@@ -46,47 +41,60 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushReplacement(
-                     context,
-                     MaterialPageRoute(builder: (context) => Group()),
-                   );
-                //ui 통일을 위해 잠시 주석 처리 합니다다
-                // if (_idController.text == 'test123' &&
-                //     _pwController.text == 'Test123!') {
-                //   // ⭐ 여기서 group.dart로 이동!
-                //   Navigator.pushReplacement(
-                //     context,
-                //     MaterialPageRoute(builder: (context) => Group()),
-                //   );
-                // } else {
-                //   ScaffoldMessenger.of(context).showSnackBar(
-                //     const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
-                //   );
-                // }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF577BE5),
+
+            // 그리고 버튼 부분 수정:
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.9, // 화면의 90% 너비
+              height: 55,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => Group()),
+                    //ui 통일을 위해 잠시 주석 처리 합니다다
+                    // if (_idController.text == 'test123' &&
+                    //     _pwController.text == 'Test123!') {
+                    //   // ⭐ 여기서 group.dart로 이동!
+                    //   Navigator.pushReplacement(
+                    //     context,
+                    //     MaterialPageRoute(builder: (context) => Group()),
+                    //   );
+                    // } else {
+                    //   ScaffoldMessenger.of(context).showSnackBar(
+                    //     const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
+                    //   );
+                    // }
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF577BE5),
+                  shape: const RoundedRectangleBorder(
+                    // 라운드 제거
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+                child: const Text(
+                  '로그인',
+                  style: TextStyle(color: Colors.white, fontSize: 20),
+                ),
               ),
-              child: const Text('로그인', style: TextStyle(color: Colors.white)),
             ),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(foregroundColor: Colors.black),
-                  child: const Text('ID 찾기'),
-                ),
-                const Text('|'),
-                TextButton(
-                  onPressed: () {},
-                  style: TextButton.styleFrom(foregroundColor: Colors.black),
-                  child: const Text('PW 찾기'),
-                ),
-                const Text('|'),
+                // TextButton(
+                //   onPressed: () {},
+                //   style: TextButton.styleFrom(foregroundColor: Colors.black),
+                //   child: const Text('ID 찾기'),
+                // ),
+                // const Text('|'),
+                // TextButton(
+                //   onPressed: () {},
+                //   style: TextButton.styleFrom(foregroundColor: Colors.black),
+                //   child: const Text('PW 찾기'),
+                // ),
+                // const Text('|'),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/signup'),
                   style: TextButton.styleFrom(foregroundColor: Colors.black),

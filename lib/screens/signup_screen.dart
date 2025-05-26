@@ -41,7 +41,6 @@ class _SignupScreenState extends State<SignupScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        leading: const BackButton(color: Colors.black),
         title: Text(
           '회원가입',
           style: const TextStyle(
