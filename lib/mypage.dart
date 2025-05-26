@@ -43,6 +43,7 @@ Future<int> scheduleNotification(String content, DateTime expiryDate, int daysBe
   );
 
   int id = notificationDateTime.hashCode;
+
   await flutterLocalNotificationsPlugin.zonedSchedule(
     id,
     '유효기간 알림',
@@ -51,11 +52,11 @@ Future<int> scheduleNotification(String content, DateTime expiryDate, int daysBe
     const NotificationDetails(
       android: AndroidNotificationDetails('your_channel_id', 'your_channel_name'),
     ),
-    androidAllowWhileIdle: true,
-    uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime,
+    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle, // ✅ 추가된 필수 항목
     matchDateTimeComponents: DateTimeComponents.dateAndTime,
   );
+
+
   return id;
 }
 
@@ -121,16 +122,22 @@ class _MyPageScreenState extends State<MyPageScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text("마이페이지",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          '마이페이지',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
+
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -30,12 +30,19 @@ class TrashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text('휴지통'),
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          '휴지통',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -46,6 +53,7 @@ class TrashScreen extends StatelessWidget {
           ),
         ],
       ),
+
       body: ListView.builder(
         itemCount: trashList.length,
         itemBuilder: (context, index) {

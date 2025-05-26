@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../group.dart';
 
 class PreferenceScreen extends StatefulWidget {
   final String nickname;
@@ -66,6 +67,8 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            
+            const SizedBox(height: 24),
             Center(
               child: Text(
                 "${widget.nickname}님이 선호하는\n기프티콘을 알려주세요!",
@@ -106,7 +109,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                 }),
               ),
             ),
-            SizedBox(height: screenHeight * 0.02),
+            SizedBox(height: screenHeight * 0.04),
             Center(
               child: Text(
                 "직접 입력하거나 아래에서 선택해보세요!",
@@ -117,11 +120,14 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
               ),
             ),
             SizedBox(height: screenHeight * 0.02),
-            Wrap(
-              spacing: screenWidth * 0.03,
-              runSpacing: screenHeight * 0.015,
-              children:
-                  keywords.map((text) {
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Wrap(
+                  spacing: screenWidth * 0.03,
+                  runSpacing: screenHeight * 0.015,
+                  alignment: WrapAlignment.center,
+                  children: keywords.map((text) {
                     final isSelected = selectedKeywords.contains(text);
                     return ChoiceChip(
                       label: Text(
@@ -137,33 +143,41 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                       onSelected: (_) => toggleKeyword(text),
                     );
                   }).toList(),
-            ),
-            const Spacer(),
-            Center(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/main');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo[400],
-                  padding: EdgeInsets.symmetric(
-                    horizontal: screenWidth * 0.2,
-                    vertical: screenHeight * 0.018,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                ),
+
+                SizedBox(height: screenHeight * 0.12),
+
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => Group()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo[400],
+                      padding: EdgeInsets.symmetric(
+                        horizontal: screenWidth * 0.2,
+                        vertical: screenHeight * 0.018,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(screenWidth * 0.03),
+                      ),
+                    ),
+                    child: Text(
+                      "저장",
+                      style: TextStyle(
+                        fontSize: screenWidth * 0.04,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-                child: Text(
-                  "저장",
-                  style: TextStyle(
-                    fontSize: screenWidth * 0.04,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+              ],
             ),
+
           ],
         ),
       ),

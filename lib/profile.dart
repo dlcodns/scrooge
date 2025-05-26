@@ -6,38 +6,33 @@ class ProfileDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
-        leading: BackButton(color: Colors.black),
-        title: Text(
-          "내 프로필",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          '내프로필',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: OutlinedButton(
-              onPressed: () {
-                Navigator.push(
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.black),
+            onPressed: () {
+              Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => EditProfileScreen()),
                 );
-              },
-              child: Text(
-                "편집하기",
-                style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.grey),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-          )
+            },
+          ),
         ],
       ),
+
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,

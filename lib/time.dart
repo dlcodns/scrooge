@@ -8,6 +8,7 @@ import 'brand.dart';
 import 'screens/friend_list_screen.dart';
 import 'mypage.dart';
 import 'trash_manage.dart';
+
 Widget _buildRoundedBox(
   BuildContext context,
   Widget destinationPage,
@@ -89,17 +90,16 @@ class _TimeState extends State<Time> {
         debugPrint('✅ 권한 허용됨: 갤러리 접근 가능');
       }
 
-      final DateTime oneMonthAgo = DateTime.now().subtract(const Duration(days: 3));
+      final DateTime oneMonthAgo = DateTime.now().subtract(
+        const Duration(days: 3),
+      );
 
       final FilterOptionGroup filterOption = FilterOptionGroup(
         imageOption: const FilterOption(needTitle: false),
         orders: [
           const OrderOption(type: OrderOptionType.createDate, asc: false),
         ],
-        createTimeCond: DateTimeCond(
-          min: oneMonthAgo,
-          max: DateTime.now(),
-        ),
+        createTimeCond: DateTimeCond(min: oneMonthAgo, max: DateTime.now()),
       );
 
       final albums = await PhotoManager.getAssetPathList(
@@ -113,13 +113,10 @@ class _TimeState extends State<Time> {
         return;
       }
 
-      final List<AssetEntity> recentImages = await albums.first.getAssetListPaged(
-        page: 0,
-        size: 99999,
-      );
+      final List<AssetEntity> recentImages = await albums.first
+          .getAssetListPaged(page: 0, size: 99999);
 
       debugPrint('📅 한 달 이내 이미지 수: ${recentImages.length}');
-
 
       final List<AssetEntity> filtered = [];
       int index = 0;
@@ -169,9 +166,6 @@ class _TimeState extends State<Time> {
     }
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -190,26 +184,26 @@ class _TimeState extends State<Time> {
               IconButton(
                 icon: Image.asset('assets/trash.png'),
                 onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => TrashScreen()),
-    );
-  },
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                  );
+                },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
                 onPressed: () {
-                  // TODO: heart 버튼 기능 추가
+                  Navigator.pushNamed(context, '/notifications');
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/account.png'),
                 onPressed: () {
-          // 👉 마이페이지로 이동
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => MyPageScreen()),
-          );
+                  // 👉 마이페이지로 이동
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                  );
                 },
               ),
             ],
@@ -260,32 +254,37 @@ class _TimeState extends State<Time> {
                                       child: CircularProgressIndicator(),
                                     );
                                   } else if (snapshot.hasData) {
-                                      return GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => GifticonViewer(asset: gifticonImages[index]),
-                                            ),
-                                          );
-                                        },
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
-                                            color: Colors.grey.shade200,
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder:
+                                                (_) => GifticonViewer(
+                                                  asset: gifticonImages[index],
+                                                ),
                                           ),
-                                          clipBehavior: Clip.hardEdge,
-                                          child: AspectRatio(
-                                            aspectRatio: 1, // ✅ 정사각형
-                                            child: Image.memory(
-                                              snapshot.data!,
-                                              fit: BoxFit.cover,
-                                              alignment: Alignment.topCenter, // ✅ 윗부분 기준
-                                            ),
+                                        );
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                          color: Colors.grey.shade200,
+                                        ),
+                                        clipBehavior: Clip.hardEdge,
+                                        child: AspectRatio(
+                                          aspectRatio: 1, // ✅ 정사각형
+                                          child: Image.memory(
+                                            snapshot.data!,
+                                            fit: BoxFit.cover,
+                                            alignment:
+                                                Alignment.topCenter, // ✅ 윗부분 기준
                                           ),
                                         ),
-                                      );
-
+                                      ),
+                                    );
                                   } else {
                                     return const Icon(
                                       Icons.image_not_supported,
@@ -339,12 +338,12 @@ class _TimeState extends State<Time> {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-            // ✅ 여기서 친구목록으로 이동!
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => FriendListScreen()),
-            );
-          },
+                  // ✅ 여기서 친구목록으로 이동!
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => FriendListScreen()),
+                  );
+                },
                 child: Center(
                   child: Image.asset('assets/friendList.png', height: 20),
                 ),
@@ -384,23 +383,17 @@ class GifticonViewer extends StatelessWidget {
               child: InteractiveViewer(
                 minScale: 1,
                 maxScale: 5,
-                child: Image.file(
-                  snapshot.data!,
-                  fit: BoxFit.contain,
-                ),
+                child: Image.file(snapshot.data!, fit: BoxFit.contain),
               ),
             ),
           );
         } else {
           return const Scaffold(
             backgroundColor: Colors.black,
-            body: Center(
-              child: Icon(Icons.broken_image, color: Colors.white),
-            ),
+            body: Center(child: Icon(Icons.broken_image, color: Colors.white)),
           );
         }
       },
     );
   }
 }
-

@@ -45,6 +45,34 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
     });
   }
 
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('친구 삭제'),
+        content: const Text('정말로 이 친구를 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: 실제 삭제 로직 실행
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('친구가 삭제되었습니다.')),
+              );
+            },
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -53,11 +81,12 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
         return false;
       },
       child: Scaffold(
+
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _popWithResult,
-          ),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          centerTitle: true,
+          leading: const BackButton(color: Colors.black),
           actions: [
             IconButton(
               icon: Icon(
@@ -67,11 +96,45 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
               onPressed: _toggleFavorite,
               tooltip: _isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가',
             ),
+            PopupMenuButton<String>(
+              color: Colors.white,
+              icon: const Icon(Icons.more_vert, color: Colors.black),
+              onSelected: (value) {
+                if (value == 'delete') {
+                  _showDeleteConfirmation();
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Text('친구 삭제'),
+                ),
+              ],
+            ),
           ],
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          elevation: 0,
         ),
+
+
+        // appBar: AppBar(
+        //   leading: IconButton(
+        //     icon: const Icon(Icons.arrow_back),
+        //     onPressed: _popWithResult,
+        //   ),
+        //   actions: [
+        //     IconButton(
+        //       icon: Icon(
+        //         _isFavorite ? Icons.star : Icons.star_border,
+        //         color: Colors.amber,
+        //       ),
+        //       onPressed: _toggleFavorite,
+        //       tooltip: _isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가',
+        //     ),
+        //   ],
+        //   backgroundColor: Colors.white,
+        //   foregroundColor: Colors.black,
+        //   elevation: 0,
+        // ),
+
         backgroundColor: Colors.white,
         body: Center(
           // ✅ 중앙 정렬
