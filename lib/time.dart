@@ -8,15 +8,12 @@ import 'brand.dart';
 import 'screens/friend_list_screen.dart';
 import 'mypage.dart';
 import 'trash_manage.dart';
-<<<<<<< HEAD
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'gifticon_state.dart';
 
 
-=======
->>>>>>> 4592103d871da1b96b65a4bbe1cea0a2a2d74df2
 
 Widget _buildRoundedBox(
   BuildContext context,
@@ -183,21 +180,8 @@ class _TimeState extends State<Time> {
         return;
       }
 
-<<<<<<< HEAD
       final DateTime oneMonthAgo = DateTime.now().subtract(const Duration(days: 1));
-=======
-      final DateTime oneMonthAgo = DateTime.now().subtract(
-        const Duration(days: 3),
-      );
 
-      final FilterOptionGroup filterOption = FilterOptionGroup(
-        imageOption: const FilterOption(needTitle: false),
-        orders: [
-          const OrderOption(type: OrderOptionType.createDate, asc: false),
-        ],
-        createTimeCond: DateTimeCond(min: oneMonthAgo, max: DateTime.now()),
-      );
->>>>>>> 4592103d871da1b96b65a4bbe1cea0a2a2d74df2
 
       final albums = await PhotoManager.getAssetPathList(
         type: RequestType.image,
@@ -208,60 +192,22 @@ class _TimeState extends State<Time> {
 
       if (albums.isEmpty) return;
 
-<<<<<<< HEAD
+
       final List<AssetEntity> allImages = await albums.first.getAssetListPaged(page: 0, size: 100);
       final List<AssetEntity> resultImages = [];
-=======
-      final List<AssetEntity> recentImages = await albums.first
-          .getAssetListPaged(page: 0, size: 99999);
->>>>>>> 4592103d871da1b96b65a4bbe1cea0a2a2d74df2
+
 
       for (final image in allImages) {
         final file = await image.originFile;
         if (file == null) continue;
 
-<<<<<<< HEAD
         final bytes = await file.readAsBytes();
         final extractedText = await _callGoogleVisionAPI(bytes);
 
         if (extractedText.contains("교환처") || extractedText.contains("유효기간") || extractedText.contains("주문번호")) {
           resultImages.add(image);
           await _sendGifticonToServer(extractedText);
-=======
-      final List<AssetEntity> filtered = [];
-      int index = 0;
 
-      for (final image in recentImages) {
-        try {
-          if (image.createDateTime.isBefore(oneMonthAgo)) {
-            debugPrint('⏳ $index번 이미지 제외: 1개월 이전');
-            index++;
-            continue;
-          }
-
-          final file = await image.originFile;
-          if (file == null) {
-            debugPrint('🚫 $index번 이미지 파일 없음');
-            index++;
-            continue;
-          }
-
-          final inputImage = InputImage.fromFile(file);
-          final recognizer = TextRecognizer();
-          final result = await recognizer.processImage(inputImage);
-
-          final text = result.text;
-          debugPrint('🔍 $index번 OCR 결과: $text');
-
-          if (keywords.any((k) => text.contains(k))) {
-            filtered.add(image);
-            debugPrint('✅ $index번 이미지 추가됨');
-          }
-
-          await recognizer.close();
-        } catch (e) {
-          debugPrint('❌ $index번 이미지 처리 중 오류: $e');
->>>>>>> 4592103d871da1b96b65a4bbe1cea0a2a2d74df2
         }
       }
 
