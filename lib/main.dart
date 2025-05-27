@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
 import 'firstpage.dart'; // firstpage.dart import
+import 'package:provider/provider.dart';
+import 'gifticon_state.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(    
+    ChangeNotifierProvider(
+    create: (_) => GifticonState(),
+    child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

@@ -8,6 +8,13 @@ import 'brand.dart';
 import 'screens/friend_list_screen.dart';
 import 'mypage.dart';
 import 'trash_manage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'gifticon_state.dart';
+
+
+
 Widget _buildRoundedBox(
   BuildContext context,
   Widget destinationPage,
@@ -65,19 +72,105 @@ class Time extends StatefulWidget {
 }
 
 class _TimeState extends State<Time> {
-  List<AssetEntity> gifticonImages = [];
+  List<String> gifticonSummaries = [];
 
   final List<String> keywords = [
     '교환처',
     '유효기간',
-    '주문번호',
+    // '주문번호',
     '상품명',
-    'CU',
-    'GS25',
-    '올리브영',
-    'kakaotalk',
-    'BBQ',
+    // 'CU',
+    // 'GS25',
+    // '올리브영',
+    //'kakaotalk',
   ];
+
+  void _updateGifticons(List<AssetEntity> resultImages) {
+    final state = Provider.of<GifticonState>(context, listen: false);
+    state.update(resultImages);
+  }
+
+
+  Future<void> _sendGifticonToServer(String text) async {
+    final brand = _extractAfterKeyword(text, "교환처");
+    final dueDateStr = _extractAfterKeyword(text, "유효기간");
+    final orderNumber = _extractAfterKeyword(text, "주문번호");
+
+    if (brand == null || dueDateStr == null || orderNumber == null) return;
+
+    // final response = await http.post(
+    //   Uri.parse('http://192.168.84.121:8080/api/gifticons'),
+    //   headers: {"Content-Type": "application/json"},
+    //   body: jsonEncode({
+    //     "gifticonNumber": orderNumber,
+    //     "brand": brand,
+    //     "dueDate": dueDateStr,
+    //     "productName": null,
+    //     "whichRoom": null,
+    //     "whoPost": null, // 실제 ID로 대체
+    //   }),
+    // );
+
+    gifticonSummaries.add(
+  "${gifticonSummaries.length + 1}번 기프티콘: "
+  "gifticonNumber: $orderNumber, brand: $brand, dueDate: $dueDateStr, "
+  "productName: null, whichRoom: null, whoPost: null"
+);
+
+    debugPrint("서버 전송 생략 — 임시 저장된 기프티콘 정보: \${gifticonSummaries.last}");
+    // debugPrint("서버 응답: ${response.statusCode}");
+  }
+
+
+  String? _extractAfterKeyword(String text, String keyword) {
+    final regex = RegExp('$keyword[:\\s]*([^\n]+)');
+    final match = regex.firstMatch(text);
+    return match?.group(1)?.trim();
+  }
+
+
+  DateTime? _parseKoreanDate(String input) {
+    try {
+      final regex = RegExp(r'(\d{4})[년.-/ ]+(\d{1,2})[월.-/ ]+(\d{1,2})');
+      final match = regex.firstMatch(input);
+      if (match != null) {
+        final year = int.parse(match.group(1)!);
+        final month = int.parse(match.group(2)!);
+        final day = int.parse(match.group(3)!);
+        return DateTime(year, month, day);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+
+  Future<String> _callGoogleVisionAPI(Uint8List imageBytes) async {
+    const apiKey = 'AIzaSyDtG9EgGBrKJzkWuAfNLabWZwNiqhV2tM8'; // 🔒 실제 API 키 입력
+    final url = Uri.parse('https://vision.googleapis.com/v1/images:annotate?key=$apiKey');
+    final requestPayload = {
+      "requests": [
+        {
+          "image": {"content": base64Encode(imageBytes)},
+          "features": [{"type": "TEXT_DETECTION"}]
+        }
+      ]
+    };
+
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(requestPayload),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['responses'][0]['fullTextAnnotation']?['text'] ?? '';
+    } else {
+      return '';
+    }
+  }
+
+
 
   Future<void> _scanGallery() async {
     try {
@@ -85,95 +178,46 @@ class _TimeState extends State<Time> {
       if (!permission.isAuth) {
         debugPrint('❌ 권한 없음: 갤러리 접근 거부됨');
         return;
-      } else {
-        debugPrint('✅ 권한 허용됨: 갤러리 접근 가능');
       }
 
-      final DateTime oneMonthAgo = DateTime.now().subtract(const Duration(days: 3));
-
-      final FilterOptionGroup filterOption = FilterOptionGroup(
-        imageOption: const FilterOption(needTitle: false),
-        orders: [
-          const OrderOption(type: OrderOptionType.createDate, asc: false),
-        ],
-        createTimeCond: DateTimeCond(
-          min: oneMonthAgo,
-          max: DateTime.now(),
-        ),
-      );
+      final DateTime oneMonthAgo = DateTime.now().subtract(const Duration(days: 1));
 
       final albums = await PhotoManager.getAssetPathList(
         type: RequestType.image,
-        filterOption: filterOption,
-        onlyAll: true,
+        filterOption: FilterOptionGroup(
+          createTimeCond: DateTimeCond(min: oneMonthAgo, max: DateTime.now()),
+        ),
       );
 
-      if (albums.isEmpty) {
-        debugPrint('⚠️ 1개월 이내 이미지 없음');
-        return;
-      }
+      if (albums.isEmpty) return;
 
-      final List<AssetEntity> recentImages = await albums.first.getAssetListPaged(
-        page: 0,
-        size: 99999,
-      );
+      final List<AssetEntity> allImages = await albums.first.getAssetListPaged(page: 0, size: 100);
+      final List<AssetEntity> resultImages = [];
 
-      debugPrint('📅 한 달 이내 이미지 수: ${recentImages.length}');
+      for (final image in allImages) {
+        final file = await image.originFile;
+        if (file == null) continue;
 
+        final bytes = await file.readAsBytes();
+        final extractedText = await _callGoogleVisionAPI(bytes);
 
-      final List<AssetEntity> filtered = [];
-      int index = 0;
-
-      for (final image in recentImages) {
-        try {
-          if (image.createDateTime.isBefore(oneMonthAgo)) {
-            debugPrint('⏳ $index번 이미지 제외: 1개월 이전');
-            index++;
-            continue;
-          }
-
-          final file = await image.originFile;
-          if (file == null) {
-            debugPrint('🚫 $index번 이미지 파일 없음');
-            index++;
-            continue;
-          }
-
-          final inputImage = InputImage.fromFile(file);
-          final recognizer = TextRecognizer();
-          final result = await recognizer.processImage(inputImage);
-
-          final text = result.text;
-          debugPrint('🔍 $index번 OCR 결과: $text');
-
-          if (keywords.any((k) => text.contains(k))) {
-            filtered.add(image);
-            debugPrint('✅ $index번 이미지 추가됨');
-          }
-
-          await recognizer.close();
-        } catch (e) {
-          debugPrint('❌ $index번 이미지 처리 중 오류: $e');
+        if (extractedText.contains("교환처") || extractedText.contains("유효기간") || extractedText.contains("주문번호")) {
+          resultImages.add(image);
+          await _sendGifticonToServer(extractedText);
         }
-
-        index++;
       }
 
-      debugPrint('📦 최종 필터링 이미지 수: ${filtered.length}');
+      _updateGifticons(resultImages); // Provider 상태 동기화
 
-      setState(() {
-        gifticonImages = filtered;
-      });
     } catch (e) {
-      debugPrint('🚨 갤러리 전체 처리 실패: $e');
+      debugPrint("❌ 오류 발생: $e");
     }
   }
 
-
-
-
   @override
   Widget build(BuildContext context) {
+    
+    final gifticonImages = Provider.of<GifticonState>(context).gifticons;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -296,6 +340,19 @@ class _TimeState extends State<Time> {
                             },
                           ),
                 ),
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 92,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: gifticonSummaries.map((summary) => Text(
+                      summary,
+                      style: const TextStyle(fontSize: 12, color: Colors.black87),
+                    )).toList(),
+                  ),
+                ),
+
               ],
             ),
           ),
