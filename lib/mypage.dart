@@ -1,8 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'notification.dart';
 
+import 'notification.dart';
 import 'profile.dart';
 import 'edit_password.dart';
 import 'trash_manage.dart';
@@ -37,10 +37,20 @@ class _MyPageScreenState extends State<MyPageScreen> {
   void initState() {
     super.initState();
     initializeNotification();
+    _loadSavedNotifications();
+  }
+
+  Future<void> _loadSavedNotifications() async {
+    final summaries = await loadSavedSummaries();
+    final ids = await loadSavedNotificationIds();
+    setState(() {
+      notificationSummaries = summaries;
+      notificationIds = ids;
+    });
   }
 
   Future<void> saveAll() async {
-    // 저장 생략 (초기화 버전)
+    await saveNotifications(notificationSummaries, notificationIds);
   }
 
   Future<void> scheduleAllExpiryNotifications({
@@ -54,7 +64,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
         item.expiryDate,
         selectedDay,
       );
-      onNotificationScheduled(id);
+      if (id != -1) {
+        onNotificationScheduled(id);
+      }
     }
   }
 
@@ -67,9 +79,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
         elevation: 0,
         centerTitle: true,
         leading: const BackButton(color: Colors.black),
-        title: Text(
+        title: const Text(
           '마이페이지',
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -95,9 +107,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
               ),
               onTap: () {
                 Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfileDetailScreen()),
-                );
+  context,
+  MaterialPageRoute(builder: (context) => TrashScreen()),
+).then((_) => _loadSavedNotifications());
               },
             ),
             Divider(thickness: 1.5, color: Colors.black),
