@@ -30,7 +30,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     Item(name: '우유', expiryDate: DateTime.now().add(Duration(days: 5))),
     Item(name: '계란', expiryDate: DateTime.now().add(Duration(days: 2))),
     Item(name: '치즈', expiryDate: DateTime.now().add(Duration(days: 7))),
-    Item(name: '기프트콘', expiryDate: DateTime(2025, 06, 01)),
+    Item(name: '기프트콘', expiryDate: DateTime(2025, 5, 25)),
   ];
 
   @override
