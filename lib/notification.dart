@@ -3,9 +3,14 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'dart:async';
+import 'dart:io';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+final StreamController<String?> notificationStream =
+    StreamController<String?>.broadcast();
 
 Future<void> initializeNotification() async {
   tz.initializeTimeZones();
@@ -18,18 +23,46 @@ Future<void> initializeNotification() async {
     android: initializationSettingsAndroid,
   );
 
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  await flutterLocalNotificationsPlugin.initialize(
+    initializationSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse response) {
+      final payload = response.payload;
+      print('🔔 알림 클릭됨, payload: $payload');
+      notificationStream.add(payload);
+    },
+    onDidReceiveBackgroundNotificationResponse: notificationTapBackground,
+  );
+
+  if (Platform.isAndroid) {
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.requestNotificationsPermission();
+  }
+}
+
+@pragma('vm:entry-point')
+void notificationTapBackground(NotificationResponse response) {
+  final payload = response.payload;
+  print('🔙 (백그라운드) 알림 클릭됨: $payload');
+  notificationStream.add(payload);
 }
 
 Future<int> scheduleNotification(
     String content, DateTime expiryDate, int daysBefore) async {
-  final DateTime targetDate = expiryDate.subtract(Duration(days: daysBefore));
-  final DateTime notificationDateTime = DateTime(
+  DateTime targetDate = expiryDate.subtract(Duration(days: daysBefore));
+  DateTime notificationDateTime = DateTime(
     targetDate.year,
     targetDate.month,
     targetDate.day,
     9,
   );
+
+  // ✅ 테스트용: daysBefore가 4일이면 20초 후에 알림 울림
+  if (daysBefore == 4) {
+    notificationDateTime = DateTime.now().add(Duration(seconds: 20));
+    print("🧪 테스트용 알림 예약: $notificationDateTime");
+  }
 
   if (notificationDateTime.isBefore(DateTime.now())) {
     print("⛔ 알림 시간이 과거입니다: $notificationDateTime");
@@ -57,18 +90,52 @@ Future<int> scheduleNotification(
     matchDateTimeComponents: DateTimeComponents.dateAndTime,
   );
 
-  // 저장
   List<String> summaries = await loadSavedSummaries();
   List<int> ids = await loadSavedNotificationIds();
-  summaries.add(content);
-  ids.add(id);
 
-  print('✅ 저장할 알림 내용: $summaries');
-  print('✅ 저장할 알림 ID들: $ids');
-
-  await saveNotifications(summaries, ids);
+  if (!ids.contains(id)) {
+    summaries.add(content);
+    ids.add(id);
+    print('✅ 저장할 알림 내용: $summaries');
+    print('✅ 저장할 알림 ID들: $ids');
+    await saveNotifications(summaries, ids);
+  } else {
+    print('⚠️ 이미 등록된 알림 ID. 중복 저장 생략됨.');
+  }
 
   return id;
+}
+
+// ✅ 10초 후 테스트용 알림
+Future<void> scheduleTestNotificationIn10Seconds() async {
+  final DateTime now = DateTime.now();
+  final DateTime notificationDateTime = now.add(Duration(seconds: 10));
+  final int id = 'test_${notificationDateTime.toIso8601String()}'.hashCode;
+
+  print('💡 예약 시도: $notificationDateTime');
+
+  await flutterLocalNotificationsPlugin.zonedSchedule(
+    id,
+    '🧪 테스트 알림 (10초 후)',
+    '이 알림은 지금으로부터 10초 후에 울립니다.',
+    tz.TZDateTime.from(notificationDateTime, tz.local),
+    const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'test_channel',
+        'Test Notifications',
+        channelDescription: '테스트용 푸시 알림',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+        enableVibration: true,
+        visibility: NotificationVisibility.public,
+      ),
+    ),
+    androidScheduleMode: AndroidScheduleMode.inexact,
+    matchDateTimeComponents: DateTimeComponents.dateAndTime,
+  );
+
+  print("✅ [10초 후] 테스트 알림 예약 완료: ${notificationDateTime.toLocal()}");
 }
 
 Future<void> cancelNotification(int id) async {
@@ -84,6 +151,12 @@ Future<void> cancelNotification(int id) async {
     await saveNotifications(summaries, ids);
     print('🗑️ 알림 취소됨. 저장된 내역 갱신됨.');
   }
+}
+
+Future<void> cancelAllNotifications() async {
+  await flutterLocalNotificationsPlugin.cancelAll();
+  await saveNotifications([], []);
+  print('🧹 모든 알림 취소 및 저장 내역 초기화 완료');
 }
 
 Future<List<String>> loadSavedSummaries() async {
@@ -111,4 +184,11 @@ Future<void> saveNotifications(List<String> summaries, List<int> ids) async {
   await prefs.setString('notification_summaries', json.encode(summaries));
   await prefs.setString('notification_ids', json.encode(ids));
   print('✅ SharedPreferences에 알림 저장 완료');
+}
+
+Future<void> clearAllNotificationPrefs() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove('notification_summaries');
+  await prefs.remove('notification_ids');
+  print("🧹 SharedPreferences 초기화 완료");
 }
