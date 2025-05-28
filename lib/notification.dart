@@ -58,13 +58,18 @@ Future<int> scheduleNotification(
     9,
   );
 
-  // ✅ 테스트용: daysBefore가 4일이면 20초 후에 알림 울림
-  if (daysBefore == 4) {
-    notificationDateTime = DateTime.now().add(Duration(seconds: 20));
-    print("🧪 테스트용 알림 예약: $notificationDateTime");
+  // ✅ 오늘이 targetDate면 → 테스트용 20초 후 알림으로 덮어쓰기
+  final now = DateTime.now();
+  final isSameDate = now.year == targetDate.year &&
+      now.month == targetDate.month &&
+      now.day == targetDate.day;
+
+  if (isSameDate) {
+    notificationDateTime = now.add(Duration(seconds: 20));
+    print("🧪 [오늘이 알림 대상일] → 20초 후 알림 예약: $notificationDateTime");
   }
 
-  if (notificationDateTime.isBefore(DateTime.now())) {
+  if (notificationDateTime.isBefore(now)) {
     print("⛔ 알림 시간이 과거입니다: $notificationDateTime");
     return -1;
   }
@@ -105,6 +110,7 @@ Future<int> scheduleNotification(
 
   return id;
 }
+
 
 // ✅ 10초 후 테스트용 알림
 Future<void> scheduleTestNotificationIn10Seconds() async {
