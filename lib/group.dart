@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:scrooge/mypage.dart';
-import 'group_gallery.dart'; // 새 페이지 import 필요
+import 'package:scrooge/mypage.dart'; // ✅ const MyPageScreen()
+import 'group_gallery.dart';
 import 'time.dart';
 import 'brand.dart';
 import 'group_create.dart';
 import 'screens/friend_list_screen.dart';
-import 'trash_manage.dart';
+import 'trash_manage.dart'; // ✅ const TrashScreen()
 
-// 기존 _buildRoundedBox 함수는 그대로 유지
 Widget _buildRoundedBox(
   BuildContext context,
   Widget destinationPage,
@@ -85,7 +84,7 @@ class Group extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                    MaterialPageRoute(builder: (_) => const TrashScreen()), // ✅ token 제거된 버전 호출
                   );
                 },
               ),
@@ -98,10 +97,9 @@ class Group extends StatelessWidget {
               IconButton(
                 icon: Image.asset('assets/account.png'),
                 onPressed: () {
-                  // 👉 마이페이지로 이동
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                    MaterialPageRoute(builder: (_) => const MyPageScreen()), // ✅ token 제거된 버전 호출
                   );
                 },
               ),
@@ -115,7 +113,6 @@ class Group extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
-                // 오른쪽 상단 필터 버튼
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -127,53 +124,46 @@ class Group extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-
-                // ✅ 그룹 목록 3열
                 Expanded(
                   child: GridView.count(
                     crossAxisCount: 3,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    children:
-                        groupInfo.map((group) {
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (_) => GroupGalleryPage(
-                                        groupName: group["name"],
-                                      ),
-                                ),
-                              );
-                            },
-                            child: Column(
-                              children: [
-                                CircleAvatar(
-                                  radius: 30,
-                                  backgroundColor: Colors.grey.shade200,
-                                  child: Text(
-                                    group["emoji"],
-                                    style: const TextStyle(fontSize: 28),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  group["name"],
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              ],
+                    children: groupInfo.map((group) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  GroupGalleryPage(groupName: group["name"]),
                             ),
                           );
-                        }).toList(),
+                        },
+                        child: Column(
+                          children: [
+                            CircleAvatar(
+                              radius: 30,
+                              backgroundColor: Colors.grey.shade200,
+                              child: Text(
+                                group["emoji"],
+                                style: const TextStyle(fontSize: 28),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              group["name"],
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ],
             ),
           ),
-
-          // 오른쪽 아래 그룹 추가 오버레이 버튼
           Positioned(
             bottom: 24,
             right: 24,
@@ -199,7 +189,6 @@ class Group extends StatelessWidget {
           ),
         ],
       ),
-      // 하단바 유지
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
@@ -227,10 +216,9 @@ class Group extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  // ✅ 여기서 친구목록으로 이동!
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => FriendListScreen()),
+                    MaterialPageRoute(builder: (_) => const FriendListScreen()),
                   );
                 },
                 child: Center(
