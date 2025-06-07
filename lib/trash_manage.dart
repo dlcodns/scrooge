@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // 날짜 포맷용
 import 'group_gallery.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_service.dart';
 import 'trash_item.dart';
 
 class TrashScreen extends StatefulWidget {
-  final String token;
-  const TrashScreen({required this.token});
+  const TrashScreen({Key? key}) : super(key: key); // ✅ token 제거
 
   @override
   _TrashScreenState createState() => _TrashScreenState();
@@ -18,7 +18,11 @@ class _TrashScreenState extends State<TrashScreen> {
   @override
   void initState() {
     super.initState();
-    trashListFuture = fetchTrashList(widget.token);
+    trashListFuture = fetchTrashList(); // ✅ token 없이 호출
+  }
+
+  String formatDate(DateTime date) {
+    return DateFormat('yyyy-MM-dd HH:mm').format(date.toLocal());
   }
 
   @override
@@ -39,7 +43,7 @@ class _TrashScreenState extends State<TrashScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               setState(() {
-                trashListFuture = fetchTrashList(widget.token);
+                trashListFuture = fetchTrashList(); // ✅ 다시 불러오기
               });
             },
           ),
@@ -48,31 +52,34 @@ class _TrashScreenState extends State<TrashScreen> {
       body: FutureBuilder<List<TrashItem>>(
         future: trashListFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting)
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
 
-          if (snapshot.hasError)
+          if (snapshot.hasError) {
             return Center(child: Text('에러 발생: ${snapshot.error}'));
+          }
 
           final trashList = snapshot.data!;
-          return ListView.builder(
+          if (trashList.isEmpty) {
+            return const Center(child: Text('휴지통이 비어 있습니다.'));
+          }
+
+          return ListView.separated(
             itemCount: trashList.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final item = trashList[index];
-              return Column(
-                children: [
-                  const Divider(),
-                  ListTile(
-                    title: Text('${item.whoUse}가 사용했습니다.'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('삭제일: ${item.deletedDate.toLocal()}'),
-                        Text('사용일: ${item.usedDate.toLocal()}'),
-                      ],
-                    ),
-                  ),
-                ],
+              return ListTile(
+                leading: const Icon(Icons.delete_forever),
+                title: Text('${item.whoUse}가 사용한 기프트콘'),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('삭제일: ${formatDate(item.deletedDate)}'),
+                    Text('사용일: ${formatDate(item.usedDate)}'),
+                  ],
+                ),
               );
             },
           );
@@ -85,11 +92,15 @@ class _TrashScreenState extends State<TrashScreen> {
         ],
         onTap: (index) {
           if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(
-              builder: (_) => GroupGalleryPage(groupName: '콘갤러리'),
-            ));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => GroupGalleryPage(groupName: '콘갤러리')),
+            );
           } else if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => FriendListScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => FriendListScreen()),
+            );
           }
         },
       ),
