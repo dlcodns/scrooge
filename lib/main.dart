@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'gifticon_state.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'pushalarm_message.dart';
 import 'firstpage.dart'; // 시작화면
@@ -11,23 +13,26 @@ FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 로컬 푸시 알림 초기화
   await initializeNotification();
 
-  // 앱이 종료된 상태에서 알림 클릭 시 처리
   final NotificationAppLaunchDetails? notificationAppLaunchDetails =
       await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
 
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => GifticonState(),
+      child: const MyApp(),
+    ),
+  );
+
   if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
     Future.delayed(const Duration(seconds: 1), () {
-      navigatorKey.currentState!.pushNamed(
+      navigatorKey.currentState?.pushNamed(
         '/message',
         arguments: notificationAppLaunchDetails?.notificationResponse?.payload,
       );
     });
   }
-
-  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

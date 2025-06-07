@@ -54,6 +54,7 @@ dependencies:
 
   # ML Kit & OCR
   google_mlkit_text_recognition: ^0.11.0
+  provider: ^6.1.1
 
   # 퍼미션/토스트
   permission_handler: ^11.0.0
