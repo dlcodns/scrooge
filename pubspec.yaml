@@ -39,6 +39,7 @@ dependencies:
   flutter_local_notifications: ^19.2.1
   timezone: ^0.10.0
   shared_preferences: ^2.2.2
+  intl: ^0.18.1
 
   # DB & 네트워크
   sqflite: ^2.2.8
