@@ -5,6 +5,7 @@ import 'brand_gallery.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_manage.dart';
 import 'mypage.dart';
+
 Widget _buildRoundedBox(
   BuildContext context,
   Widget destinationPage,
@@ -83,26 +84,26 @@ class Brand extends StatelessWidget {
               IconButton(
                 icon: Image.asset('assets/trash.png'),
                 onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => TrashScreen()),
-    );
-  },
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                  );
+                },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
                 onPressed: () {
-                  // TODO: heart 버튼 기능 추가
+                  Navigator.pushNamed(context, '/notifications');
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/account.png'),
                 onPressed: () {
-          // 👉 마이페이지로 이동
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => MyPageScreen()),
-          );
+                  // 👉 마이페이지로 이동
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                  );
                 },
               ),
             ],
@@ -133,45 +134,48 @@ class Brand extends StatelessWidget {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 36,
                 childAspectRatio: 0.7, // ✅ 텍스트 포함해서 높이 확보
-                children: brandInfo.map((brand) {
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BrandGalleryPage(brandName: brand["name"]),
+                children:
+                    brandInfo.map((brand) {
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (_) => BrandGalleryPage(
+                                    brandName: brand["name"],
+                                  ),
+                            ),
+                          );
+                        },
+                        child: Column(
+                          children: [
+                            Container(
+                              width: itemSize,
+                              height: itemSize,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              child: Image.asset(
+                                brand["image"],
+                                fit: BoxFit.cover,
+                                alignment: Alignment.topCenter,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              brand["name"],
+                              style: const TextStyle(fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
                       );
-                    },
-                    child: Column(
-                      children: [
-                        Container(
-                          width: itemSize,
-                          height: itemSize,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          clipBehavior: Clip.hardEdge,
-                          child: Image.asset(
-                            brand["image"],
-                            fit: BoxFit.cover,
-                            alignment: Alignment.topCenter,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          brand["name"],
-                          style: const TextStyle(fontSize: 14),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                    }).toList(),
               ),
-            )
-
+            ),
           ],
         ),
       ),
@@ -205,12 +209,12 @@ class Brand extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-            // ✅ 여기서 친구목록으로 이동!
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => FriendListScreen()),
-            );
-          },
+                  // ✅ 여기서 친구목록으로 이동!
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => FriendListScreen()),
+                  );
+                },
                 child: Center(
                   child: Image.asset('assets/friendList.png', height: 20),
                 ),

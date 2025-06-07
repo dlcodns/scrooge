@@ -8,6 +8,8 @@ import 'screens/add_friend_screen.dart';
 import 'screens/friend_profile_screen.dart';
 import 'screens/main_tab_screen.dart';
 import 'screens/notification_screen.dart'; // 추가
+import 'signup_in_screen.dart';
+import 'screens/friend_list_screen.dart';
 
 class FirstPage extends StatelessWidget {
   const FirstPage({super.key});
@@ -28,6 +30,8 @@ class FirstPage extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/':
+            return MaterialPageRoute(builder: (_) => const SignupInScreen());
+          case '/login':
             return MaterialPageRoute(builder: (_) => const LoginScreen());
           case '/signup':
             return MaterialPageRoute(builder: (_) => const SignupScreen());
@@ -41,6 +45,8 @@ class FirstPage extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) => PreferenceScreen(nickname: nickname),
             );
+          case '/friend_list':
+            return MaterialPageRoute(builder: (_) => const FriendListScreen());
           case '/friend_add_success':
             final name = settings.arguments as String;
             return MaterialPageRoute(

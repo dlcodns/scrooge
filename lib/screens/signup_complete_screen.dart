@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'preference_screen.dart';
 
 class SignupCompleteScreen extends StatefulWidget {
   final String nickname;

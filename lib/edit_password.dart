@@ -19,16 +19,20 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("비밀번호 변경",
-            style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: screenWidth * 0.05)),
-        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: BackButton(color: Colors.black),
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          '비밀번호 변경',
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
+
       body: Padding(
         padding: EdgeInsets.symmetric(
             horizontal: screenWidth * 0.06, vertical: screenHeight * 0.03),
