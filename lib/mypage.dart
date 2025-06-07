@@ -15,7 +15,7 @@ class Item {
 }
 
 class MyPageScreen extends StatefulWidget {
-  const MyPageScreen({Key? key}) : super(key: key); // ✅ token 제거
+  const MyPageScreen({Key? key}) : super(key: key);
 
   @override
   _MyPageScreenState createState() => _MyPageScreenState();
