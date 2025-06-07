@@ -38,6 +38,8 @@ dependencies:
   # 알림 및 시간
   flutter_local_notifications: ^19.2.1
   timezone: ^0.10.0
+  shared_preferences: ^2.2.2
+  intl: ^0.18.1
 
   # DB & 네트워크
   sqflite: ^2.2.8
@@ -47,7 +49,7 @@ dependencies:
 
   # 이미지 및 사진
   photo_manager: ^3.0.0
-  image_picker: ^1.1.2   # 두 파일 중 더 최신 버전 선택
+  image_picker: ^1.0.4   # 두 파일 중 더 최신 버전 선택
   image_gallery_saver_plus: ^4.0.1
 
   # ML Kit & OCR
