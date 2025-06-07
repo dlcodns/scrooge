@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:scrooge/mypage.dart'; // ✅ const MyPageScreen()
+import 'package:scrooge/mypage.dart';
 import 'group_gallery.dart';
 import 'time.dart';
 import 'brand.dart';
 import 'group_create.dart';
 import 'screens/friend_list_screen.dart';
-import 'trash_manage.dart'; // ✅ const TrashScreen()
+import 'trash_manage.dart';
 
 Widget _buildRoundedBox(
   BuildContext context,
