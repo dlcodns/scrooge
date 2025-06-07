@@ -6,6 +6,7 @@ import 'notification.dart';
 import 'profile.dart';
 import 'edit_password.dart';
 import 'trash_manage.dart';
+import 'trash_manage.dart'; // 반드시 token 받는 TrashScreen import 필요
 
 class Item {
   final String name;
@@ -15,6 +16,10 @@ class Item {
 }
 
 class MyPageScreen extends StatefulWidget {
+  final String token;
+
+  const MyPageScreen({super.key, required this.token});
+
   @override
   _MyPageScreenState createState() => _MyPageScreenState();
 }
@@ -30,7 +35,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
     Item(name: '우유', expiryDate: DateTime.now().add(Duration(days: 5))),
     Item(name: '계란', expiryDate: DateTime.now().add(Duration(days: 2))),
     Item(name: '치즈', expiryDate: DateTime.now().add(Duration(days: 7))),
-    Item(name: '기프트콘', expiryDate: DateTime(2025, 06, 01)),
+    Item(name: '기프트콘', expiryDate: DateTime(2025, 06, 03)),
   ];
 
   @override
@@ -107,9 +112,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
               ),
               onTap: () {
                 Navigator.push(
-  context,
-  MaterialPageRoute(builder: (context) => TrashScreen()),
-).then((_) => _loadSavedNotifications());
+                  context,
+                  MaterialPageRoute(builder: (context) => TrashScreen(token: widget.token)),
+                ).then((_) => _loadSavedNotifications());
               },
             ),
             Divider(thickness: 1.5, color: Colors.black),
@@ -214,7 +219,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => TrashScreen()),
+                  MaterialPageRoute(builder: (context) => TrashScreen(token: widget.token)),
                 );
               },
             ),
