@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'new_password.dart';
 
 class EditPasswordScreen extends StatefulWidget {
+  final String token; // ✅ 추가
+  const EditPasswordScreen({required this.token, Key? key}) : super(key: key);
   @override
   _EditPasswordScreenState createState() => _EditPasswordScreenState();
 }
@@ -89,7 +91,7 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => SetNewPasswordScreen()),
+                            builder: (context) => SetNewPasswordScreen(token:widget.token)),
                       );
                     }
                   },

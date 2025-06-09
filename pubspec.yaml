@@ -60,6 +60,9 @@ dependencies:
   permission_handler: ^11.0.0
   fluttertoast: ^8.2.12
 
+  # 로그인
+  jwt_decode: ^0.3.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

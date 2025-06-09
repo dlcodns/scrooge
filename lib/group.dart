@@ -55,7 +55,8 @@ Widget _buildRoundedBox(
 }
 
 class Group extends StatelessWidget {
-  const Group({super.key});
+  final String token;
+  const Group({required this.token, super.key});
 
   final List<Map<String, dynamic>> groupInfo = const [
     {"name": "가족방", "icon": Icons.family_restroom, "emoji": "😊"},
@@ -84,7 +85,7 @@ class Group extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const TrashScreen()), // ✅ token 제거된 버전 호출
+                    MaterialPageRoute(builder: (_) => TrashScreen(token:token)), // ✅ token 제거된 버전 호출
                   );
                 },
               ),
@@ -99,7 +100,7 @@ class Group extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const MyPageScreen()), // ✅ token 제거된 버전 호출
+                    MaterialPageRoute(builder: (_) => MyPageScreen(token:token)), // ✅ token 제거된 버전 호출
                   );
                 },
               ),
@@ -116,11 +117,11 @@ class Group extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildRoundedBox(context, const Group(), 1),
+                    _buildRoundedBox(context, Group(token:token), 1),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, const Time(), 2),
+                    _buildRoundedBox(context, Time(token:token), 2),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, const Brand(), 3),
+                    _buildRoundedBox(context, Brand(token:token), 3),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -171,7 +172,7 @@ class Group extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const GroupCreateStep1()),
+                  MaterialPageRoute(builder: (_) => GroupCreateStep1(token:token)),
                 );
               },
               child: Container(
@@ -218,7 +219,7 @@ class Group extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const FriendListScreen()),
+                    MaterialPageRoute(builder: (_) => FriendListScreen(token:token)),
                   );
                 },
                 child: Center(

@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart'; // ✅ 추가
 import 'package:scrooge/group.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,10 +16,41 @@ class _LoginScreenState extends State<LoginScreen> {
   final _pwController = TextEditingController();
   bool _obscure = true;
 
+  Future<String?> login(String username, String password) async {
+    final url = Uri.parse('http://192.168.0.4:8080/api/users/login');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'userId': username, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+final token = data['token']; // ✅ 수정된 부분
+if (token != null) {
+  // SharedPreferences 저장 등 처리
+  return token;
+} else {
+  print('token 누락됨');
+  return null;
+}
+
+      } else {
+        print("로그인 실패: ${response.statusCode} / ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("로그인 중 오류 발생: $e");
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // ✅ 배경 흰색
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -33,45 +67,44 @@ class _LoginScreenState extends State<LoginScreen> {
               decoration: InputDecoration(
                 labelText: '비밀번호를 입력해주세요',
                 suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscure ? Icons.visibility : Icons.visibility_off,
-                  ),
+                  icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-
-            // 그리고 버튼 부분 수정:
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9, // 화면의 90% 너비
+              width: MediaQuery.of(context).size.width * 0.9,
               height: 55,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => Group()),
-                    //ui 통일을 위해 잠시 주석 처리 합니다다
-                    // if (_idController.text == 'test123' &&
-                    //     _pwController.text == 'Test123!') {
-                    //   // ⭐ 여기서 group.dart로 이동!
-                    //   Navigator.pushReplacement(
-                    //     context,
-                    //     MaterialPageRoute(builder: (context) => Group()),
-                    //   );
-                    // } else {
-                    //   ScaffoldMessenger.of(context).showSnackBar(
-                    //     const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
-                    //   );
-                    // }
-                  );
+                onPressed: () async {
+                  final username = _idController.text.trim();
+                  final password = _pwController.text.trim();
+
+                  // ✅ 입력값 검증
+                  if (username.isEmpty || password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('아이디와 비밀번호를 모두 입력해주세요')),
+                    );
+                    return;
+                  }
+
+                  final token = await login(username, password);
+
+                  if (token != null) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => Group(token: token)),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('로그인에 실패했습니다. 다시 시도해주세요.')),
+                    );
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF577BE5),
-                  shape: const RoundedRectangleBorder(
-                    // 라운드 제거
-                    borderRadius: BorderRadius.zero,
-                  ),
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
                 ),
                 child: const Text(
                   '로그인',
@@ -79,22 +112,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // TextButton(
-                //   onPressed: () {},
-                //   style: TextButton.styleFrom(foregroundColor: Colors.black),
-                //   child: const Text('ID 찾기'),
-                // ),
-                // const Text('|'),
-                // TextButton(
-                //   onPressed: () {},
-                //   style: TextButton.styleFrom(foregroundColor: Colors.black),
-                //   child: const Text('PW 찾기'),
-                // ),
-                // const Text('|'),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/signup'),
                   style: TextButton.styleFrom(foregroundColor: Colors.black),

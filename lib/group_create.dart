@@ -4,7 +4,8 @@ import 'dart:io';
 import 'group.dart';
 
 class GroupCreateStep1 extends StatefulWidget {
-  const GroupCreateStep1({super.key});
+  final String token; 
+  const GroupCreateStep1({required this.token, super.key});
 
   @override
   State<GroupCreateStep1> createState() => _GroupCreateStep1State();
@@ -100,7 +101,10 @@ class _GroupCreateStep1State extends State<GroupCreateStep1> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => GroupCreateStep2(selectedFriends: selectedFriends),
+              builder: (_) => GroupCreateStep2(
+                selectedFriends: selectedFriends,
+                token: widget.token, 
+              ),
             ),
           );
         },
@@ -113,8 +117,13 @@ class _GroupCreateStep1State extends State<GroupCreateStep1> {
 
 class GroupCreateStep2 extends StatefulWidget {
   final List<String> selectedFriends;
+  final String token;
 
-  const GroupCreateStep2({super.key, required this.selectedFriends});
+  const GroupCreateStep2({
+    super.key,
+    required this.selectedFriends,
+    required this.token,
+  });
 
   @override
   State<GroupCreateStep2> createState() => _GroupCreateStep2State();
@@ -200,10 +209,11 @@ class _GroupCreateStep2State extends State<GroupCreateStep2> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // 여기서 저장된 방 이름과 사진 정보를 활용하여 Group으로 이동
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (_) => const Group()),
+            MaterialPageRoute(
+              builder: (_) => Group(token: widget.token), // ✅ token 전달
+            ),
             (route) => false,
           );
         },

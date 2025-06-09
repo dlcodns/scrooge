@@ -3,8 +3,8 @@ import '../group.dart';
 
 class PreferenceScreen extends StatefulWidget {
   final String nickname;
-
-  const PreferenceScreen({super.key, required this.nickname});
+  final String token;
+  const PreferenceScreen({super.key, required this.nickname, required this.token});
 
   @override
   State<PreferenceScreen> createState() => _PreferenceScreenState();
@@ -152,7 +152,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => Group()),
+                        MaterialPageRoute(builder: (_) => Group(token:widget.token)),
                       );
                     },
                     style: ElevatedButton.styleFrom(

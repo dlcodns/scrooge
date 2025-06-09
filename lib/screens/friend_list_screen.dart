@@ -1,3 +1,4 @@
+// ✅ token 전달 반영
 import 'package:flutter/material.dart';
 import 'package:scrooge/mypage.dart';
 import '../group.dart';
@@ -20,7 +21,8 @@ class Friend {
 }
 
 class FriendListScreen extends StatefulWidget {
-  const FriendListScreen({super.key});
+  final String token; // ✅ token 추가
+  const FriendListScreen({required this.token, Key? key}) : super(key: key);
 
   @override
   State<FriendListScreen> createState() => _FriendListScreenState();
@@ -52,19 +54,17 @@ class _FriendListScreenState extends State<FriendListScreen> {
   }
 
   void _navigateToProfile(Friend friend) async {
-    final result =
-        await Navigator.pushNamed(
-              context,
-              '/friend_profile',
-              arguments: {
-                'name': friend.name,
-                'first': friend.preference,
-                'second': friend.second ?? '',
-                'third': friend.third ?? '',
-                'isFavorite': friend.isFavorite,
-              },
-            )
-            as Map<String, dynamic>?;
+    final result = await Navigator.pushNamed(
+      context,
+      '/friend_profile',
+      arguments: {
+        'name': friend.name,
+        'first': friend.preference,
+        'second': friend.second ?? '',
+        'third': friend.third ?? '',
+        'isFavorite': friend.isFavorite,
+      },
+    ) as Map<String, dynamic>?;
 
     if (result != null && result['name'] == friend.name) {
       final isNowFavorite = result['isFavorite'] ?? false;
@@ -72,21 +72,20 @@ class _FriendListScreenState extends State<FriendListScreen> {
       if (!isNowFavorite && friend.isFavorite) {
         final confirm = await showDialog<bool>(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('즐겨찾기 삭제'),
-                content: Text('${friend.name}님을 즐겨찾기에서 해제할까요?'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('취소'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('확인'),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: const Text('즐겨찾기 삭제'),
+            content: Text('${friend.name}님을 즐겨찾기에서 해제할까요?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('취소'),
               ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('확인'),
+              ),
+            ],
+          ),
         );
         if (confirm != true) return;
       }
@@ -100,16 +99,12 @@ class _FriendListScreenState extends State<FriendListScreen> {
   @override
   Widget build(BuildContext context) {
     final query = _searchController.text;
-    final matchingFriends =
-        query.isEmpty
-            ? []
-            : _allFriends
-                .where((friend) => friend.name.contains(query))
-                .toList();
+    final matchingFriends = query.isEmpty
+        ? []
+        : _allFriends.where((friend) => friend.name.contains(query)).toList();
     final favoriteFriends = _allFriends.where((f) => f.isFavorite).toList();
 
     return Scaffold(
-
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 255, 255, 255),
         elevation: 0,
@@ -126,7 +121,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                    MaterialPageRoute(builder: (_) => TrashScreen(token: widget.token)), // ✅ 전달
                   );
                 },
               ),
@@ -139,10 +134,9 @@ class _FriendListScreenState extends State<FriendListScreen> {
               IconButton(
                 icon: Image.asset('assets/account.png'),
                 onPressed: () {
-                  // 👉 마이페이지로 이동
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                    MaterialPageRoute(builder: (_) => MyPageScreen(token: widget.token)), // ✅ 전달
                   );
                 },
               ),
@@ -179,10 +173,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                   width: double.infinity,
                   color: Colors.grey[200],
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: const Text(
-                    '검색 결과',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  child: const Text('검색 결과', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 SizedBox(
                   height: 120,
@@ -217,10 +208,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                   width: double.infinity,
                   color: Colors.grey[200],
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: const Text(
-                    '즐겨찾기',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  child: const Text('즐겨찾기', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 SizedBox(
                   height: 120,
@@ -275,8 +263,6 @@ class _FriendListScreenState extends State<FriendListScreen> {
               ),
             ],
           ),
-
-          // 🔵 오버레이 버튼 추가
           Positioned(
             bottom: 24,
             right: 24,
@@ -299,41 +285,37 @@ class _FriendListScreenState extends State<FriendListScreen> {
           ),
         ],
       ),
-
-
-            bottomNavigationBar: Container(
+      bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
               blurRadius: 6,
-              offset: const Offset(0, -2), // 위쪽 그림자
+              offset: const Offset(0, -2),
             ),
           ],
         ),
         height: 60,
         child: Row(
           children: [
-            // 왼쪽 버튼
             Expanded(
               child: GestureDetector(
                 onTap: () {
                   Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => Group()),
-                );
+                    context,
+                    MaterialPageRoute(builder: (_) => Group(token:widget.token)),
+                  );
                 },
                 child: Center(
                   child: Image.asset('assets/conGall_1.png', height: 20),
                 ),
               ),
             ),
-            // 오른쪽 버튼
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                // ✅ 여기서 친구목록으로 이동!
+                  // 현재 페이지 그대로 유지
                 },
                 child: Center(
                   child: Image.asset('assets/friendList_1.png', height: 20),

@@ -56,7 +56,9 @@ Widget _buildRoundedBox(
 }
 
 class Brand extends StatelessWidget {
-  const Brand({super.key});
+  final String token; // ✅ 추가
+  const Brand({required this.token, Key? key}) : super(key: key);
+  
 
   final List<Map<String, dynamic>> brandInfo = const [
     {"name": "스타벅스", "image": "assets/starbucks.png"},
@@ -86,7 +88,7 @@ class Brand extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                    MaterialPageRoute(builder: (_) => TrashScreen(token: token)),
                   );
                 },
               ),
@@ -102,7 +104,7 @@ class Brand extends StatelessWidget {
                   // 👉 마이페이지로 이동
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                    MaterialPageRoute(builder: (_) => MyPageScreen(token:token)),
                   );
                 },
               ),
@@ -119,11 +121,11 @@ class Brand extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _buildRoundedBox(context, Group(), 1),
+                _buildRoundedBox(context, Group(token:token), 1),
                 const SizedBox(width: 8),
-                _buildRoundedBox(context, Time(), 2),
+                _buildRoundedBox(context, Time(token:token), 2),
                 const SizedBox(width: 8),
-                _buildRoundedBox(context, Brand(), 3),
+                _buildRoundedBox(context, Brand(token:token), 3),
               ],
             ),
             const SizedBox(height: 16),
@@ -212,7 +214,7 @@ class Brand extends StatelessWidget {
                   // ✅ 여기서 친구목록으로 이동!
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => FriendListScreen()),
+                    MaterialPageRoute(builder: (_) => FriendListScreen(token:token)),
                   );
                 },
                 child: Center(

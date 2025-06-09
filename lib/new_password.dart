@@ -3,6 +3,9 @@ import 'mypage.dart';
 import 'dart:async';
 
 class SetNewPasswordScreen extends StatefulWidget {
+  final String token; 
+  const SetNewPasswordScreen({required this.token, Key? key}) : super(key: key);
+
   @override
   _SetNewPasswordScreenState createState() => _SetNewPasswordScreenState();
 }
@@ -16,7 +19,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   bool isPasswordValid = true;
 
   final RegExp passwordRegex =
-      RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\$&*~]).{8,20}$');
+      RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#\\$&*~]).{8,20}\$');
 
   bool get isFormValid =>
       newPasswordController.text.isNotEmpty &&
@@ -73,10 +76,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                 });
               },
             ),
-
             SizedBox(height: screenHeight * 0.03),
-
-            /// 수정된 부분 시작: 확인 비밀번호 입력 + 메시지
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -116,10 +116,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   ),
               ],
             ),
-            /// 수정된 부분 끝
-
             Spacer(),
-
             Column(
               children: [
                 ElevatedButton(
@@ -130,7 +127,9 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                           });
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => PasswordChangedScreen()),
+                            MaterialPageRoute(
+                              builder: (context) => PasswordChangedScreen(token: widget.token),
+                            ),
                           );
                         }
                       : null,
@@ -169,6 +168,9 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 }
 
 class PasswordChangedScreen extends StatefulWidget {
+  final String token; // ✅ 추가
+  const PasswordChangedScreen({required this.token, Key? key}) : super(key: key);
+
   @override
   _PasswordChangedScreenState createState() => _PasswordChangedScreenState();
 }
@@ -180,7 +182,9 @@ class _PasswordChangedScreenState extends State<PasswordChangedScreen> {
     Timer(Duration(seconds: 3), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => MyPageScreen()),
+        MaterialPageRoute(
+          builder: (context) => MyPageScreen(token: widget.token),
+        ),
       );
     });
   }

@@ -65,7 +65,8 @@ Widget _buildRoundedBox(
 }
 
 class Time extends StatefulWidget {
-  const Time({super.key});
+  final String token; // ✅ 추가
+  const Time({required this.token, super.key});
 
   @override
   State<Time> createState() => _TimeState();
@@ -240,7 +241,7 @@ class _TimeState extends State<Time> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                    MaterialPageRoute(builder: (_) => TrashScreen(token: widget.token)),
                   );
                 },
               ),
@@ -256,7 +257,7 @@ class _TimeState extends State<Time> {
                   // 👉 마이페이지로 이동
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                    MaterialPageRoute(builder: (_) => MyPageScreen(token: widget.token)),
                   );
                 },
               ),
@@ -275,11 +276,11 @@ class _TimeState extends State<Time> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildRoundedBox(context, Group(), 1),
+                    _buildRoundedBox(context, Group(token: widget.token), 1),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, Time(), 2),
+                    _buildRoundedBox(context, Time(token:widget.token), 2),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, Brand(), 3),
+                    _buildRoundedBox(context, Brand(token: widget.token), 3),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -408,7 +409,7 @@ class _TimeState extends State<Time> {
                   // ✅ 여기서 친구목록으로 이동!
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => FriendListScreen()),
+                    MaterialPageRoute(builder: (_) => FriendListScreen(token:widget.token)),
                   );
                 },
                 child: Center(
