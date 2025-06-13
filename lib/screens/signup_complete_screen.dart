@@ -13,12 +13,14 @@ class _SignupCompleteScreenState extends State<SignupCompleteScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(
-        context,
-        '/preference',
-        arguments: widget.nickname,
-      );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(const Duration(seconds: 3), () {
+        Navigator.pushReplacementNamed(
+          context,
+          '/login',
+          arguments: widget.nickname, // 필요 없다면 제거 가능
+        );
+      });
     });
   }
 

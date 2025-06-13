@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // ✅ 추가
-import 'package:scrooge/group.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,8 +15,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _pwController = TextEditingController();
   bool _obscure = true;
 
-  Future<String?> login(String username, String password) async {
-    final url = Uri.parse('http://192.168.0.4:8080/api/users/login');
+  Future<Map<String, String>?> login(String username, String password) async {
+    final url = Uri.parse('http://172.30.129.19:8080/api/users/login');
 
     try {
       final response = await http.post(
@@ -28,19 +27,26 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-final token = data['token']; // ✅ 수정된 부분
-if (token != null) {
-  // SharedPreferences 저장 등 처리
-  return token;
-} else {
-  print('token 누락됨');
-  return null;
-}
+        final token = data['token'];
+        final nickname = data['nickname'];
+        final id = data['id'];
 
-      } else {
-        print("로그인 실패: ${response.statusCode} / ${response.body}");
-        return null;
+        if (token != null && id != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('accessToken', token);
+          await prefs.setString('nickname', nickname ?? '');
+          await prefs.setInt('userId', id);
+
+          return {
+            'token': token,
+            'nickname': nickname ?? '',
+            'id': id.toString(),
+          };
+        }
       }
+
+      print("로그인 실패: ${response.statusCode} / ${response.body}");
+      return null;
     } catch (e) {
       print("로그인 중 오류 발생: $e");
       return null;
@@ -67,7 +73,9 @@ if (token != null) {
               decoration: InputDecoration(
                 labelText: '비밀번호를 입력해주세요',
                 suffixIcon: IconButton(
-                  icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                  icon: Icon(
+                    _obscure ? Icons.visibility : Icons.visibility_off,
+                  ),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
@@ -81,7 +89,6 @@ if (token != null) {
                   final username = _idController.text.trim();
                   final password = _pwController.text.trim();
 
-                  // ✅ 입력값 검증
                   if (username.isEmpty || password.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('아이디와 비밀번호를 모두 입력해주세요')),
@@ -89,12 +96,17 @@ if (token != null) {
                     return;
                   }
 
-                  final token = await login(username, password);
+                  final result = await login(username, password);
 
-                  if (token != null) {
-                    Navigator.pushReplacement(
+                  if (result != null) {
+                    Navigator.pushReplacementNamed(
                       context,
-                      MaterialPageRoute(builder: (context) => Group(token: token)),
+                      '/preference',
+                      arguments: {
+                        'nickname': result['nickname'],
+                        'token': result['token'],
+                        'userId': int.parse(result['id']!),
+                      },
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -104,7 +116,9 @@ if (token != null) {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF577BE5),
-                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
                 ),
                 child: const Text(
                   '로그인',
