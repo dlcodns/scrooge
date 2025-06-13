@@ -7,8 +7,10 @@ import 'trash_item.dart';
 
 class TrashScreen extends StatefulWidget {
   final String token;
+  final int userId;
 
-  const TrashScreen({required this.token, Key? key}) : super(key: key);
+  const TrashScreen({required this.token, required this.userId, Key? key})
+    : super(key: key);
 
   @override
   _TrashScreenState createState() => _TrashScreenState();
@@ -38,7 +40,11 @@ class _TrashScreenState extends State<TrashScreen> {
         leading: const BackButton(color: Colors.black),
         title: const Text(
           '휴지통',
-          style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -72,10 +78,14 @@ class _TrashScreenState extends State<TrashScreen> {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final item = trashList[index];
-              final daysUntilDelete = item.deletedDate.difference(DateTime.now()).inDays;
+              final daysUntilDelete =
+                  item.deletedDate.difference(DateTime.now()).inDays;
 
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -85,31 +95,32 @@ class _TrashScreenState extends State<TrashScreen> {
                     ),
                     const SizedBox(height: 8),
                     Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
-                      border: Border.all(color: Colors.black12),
-                      borderRadius: BorderRadius.circular(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        border: Border.all(color: Colors.black12),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          _buildDateBox(item.usedDate),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [Text(item.gifticonName)],
+                          ),
+                        ],
+                      ),
                     ),
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      children: [
-                        _buildDateBox(item.usedDate),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(item.gifticonName),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
 
                     const SizedBox(height: 4),
                     if (daysUntilDelete >= 0)
                       Text(
                         '${daysUntilDelete}일 후 삭제됩니다',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                   ],
                 ),
@@ -127,12 +138,20 @@ class _TrashScreenState extends State<TrashScreen> {
           if (index == 0) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => GroupGalleryPage(groupName: '콘갤러리')),
+              MaterialPageRoute(
+                builder: (_) => GroupGalleryPage(groupName: '콘갤러리'),
+              ),
             );
           } else if (index == 1) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => FriendListScreen(token: widget.token)),
+              MaterialPageRoute(
+                builder:
+                    (_) => FriendListScreen(
+                      token: widget.token,
+                      userId: widget.userId,
+                    ),
+              ),
             );
           }
         },
@@ -156,9 +175,15 @@ class _TrashScreenState extends State<TrashScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('$monthDay', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            '$monthDay',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
           const SizedBox(height: 4),
-          const Text('사용', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+          const Text(
+            '사용',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
         ],
       ),
     );

@@ -13,8 +13,6 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'gifticon_state.dart';
 
-
-
 Widget _buildRoundedBox(
   BuildContext context,
   Widget destinationPage,
@@ -66,7 +64,9 @@ Widget _buildRoundedBox(
 
 class Time extends StatefulWidget {
   final String token; // ✅ 추가
-  const Time({required this.token, super.key});
+  final int userId;
+
+  const Time({required this.token, required this.userId, super.key});
 
   @override
   State<Time> createState() => _TimeState();
@@ -91,7 +91,6 @@ class _TimeState extends State<Time> {
     state.update(resultImages);
   }
 
-
   Future<void> _sendGifticonToServer(String text) async {
     final brand = _extractAfterKeyword(text, "교환처");
     final dueDateStr = _extractAfterKeyword(text, "유효기간");
@@ -113,22 +112,20 @@ class _TimeState extends State<Time> {
     // );
 
     gifticonSummaries.add(
-  "${gifticonSummaries.length + 1}번 기프티콘: "
-  "gifticonNumber: $orderNumber, brand: $brand, dueDate: $dueDateStr, "
-  "productName: null, whichRoom: null, whoPost: null"
-);
+      "${gifticonSummaries.length + 1}번 기프티콘: "
+      "gifticonNumber: $orderNumber, brand: $brand, dueDate: $dueDateStr, "
+      "productName: null, whichRoom: null, whoPost: null",
+    );
 
     debugPrint("서버 전송 생략 — 임시 저장된 기프티콘 정보: \${gifticonSummaries.last}");
     // debugPrint("서버 응답: ${response.statusCode}");
   }
-
 
   String? _extractAfterKeyword(String text, String keyword) {
     final regex = RegExp('$keyword[:\\s]*([^\n]+)');
     final match = regex.firstMatch(text);
     return match?.group(1)?.trim();
   }
-
 
   DateTime? _parseKoreanDate(String input) {
     try {
@@ -144,17 +141,20 @@ class _TimeState extends State<Time> {
     return null;
   }
 
-
   Future<String> _callGoogleVisionAPI(Uint8List imageBytes) async {
     const apiKey = 'AIzaSyDtG9EgGBrKJzkWuAfNLabWZwNiqhV2tM8'; // 🔒 실제 API 키 입력
-    final url = Uri.parse('https://vision.googleapis.com/v1/images:annotate?key=$apiKey');
+    final url = Uri.parse(
+      'https://vision.googleapis.com/v1/images:annotate?key=$apiKey',
+    );
     final requestPayload = {
       "requests": [
         {
           "image": {"content": base64Encode(imageBytes)},
-          "features": [{"type": "TEXT_DETECTION"}]
-        }
-      ]
+          "features": [
+            {"type": "TEXT_DETECTION"},
+          ],
+        },
+      ],
     };
 
     final response = await http.post(
@@ -171,8 +171,6 @@ class _TimeState extends State<Time> {
     }
   }
 
-
-
   Future<void> _scanGallery() async {
     try {
       final permission = await PhotoManager.requestPermissionExtend();
@@ -181,8 +179,9 @@ class _TimeState extends State<Time> {
         return;
       }
 
-      final DateTime oneMonthAgo = DateTime.now().subtract(const Duration(days: 1));
-
+      final DateTime oneMonthAgo = DateTime.now().subtract(
+        const Duration(days: 1),
+      );
 
       final albums = await PhotoManager.getAssetPathList(
         type: RequestType.image,
@@ -193,10 +192,11 @@ class _TimeState extends State<Time> {
 
       if (albums.isEmpty) return;
 
-
-      final List<AssetEntity> allImages = await albums.first.getAssetListPaged(page: 0, size: 100);
+      final List<AssetEntity> allImages = await albums.first.getAssetListPaged(
+        page: 0,
+        size: 100,
+      );
       final List<AssetEntity> resultImages = [];
-
 
       for (final image in allImages) {
         final file = await image.originFile;
@@ -205,15 +205,15 @@ class _TimeState extends State<Time> {
         final bytes = await file.readAsBytes();
         final extractedText = await _callGoogleVisionAPI(bytes);
 
-        if (extractedText.contains("교환처") || extractedText.contains("유효기간") || extractedText.contains("주문번호")) {
+        if (extractedText.contains("교환처") ||
+            extractedText.contains("유효기간") ||
+            extractedText.contains("주문번호")) {
           resultImages.add(image);
           await _sendGifticonToServer(extractedText);
-
         }
       }
 
       _updateGifticons(resultImages); // Provider 상태 동기화
-
     } catch (e) {
       debugPrint("❌ 오류 발생: $e");
     }
@@ -221,7 +221,6 @@ class _TimeState extends State<Time> {
 
   @override
   Widget build(BuildContext context) {
-    
     final gifticonImages = Provider.of<GifticonState>(context).gifticons;
     return Scaffold(
       backgroundColor: Colors.white,
@@ -241,7 +240,13 @@ class _TimeState extends State<Time> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TrashScreen(token: widget.token)),
+                    MaterialPageRoute(
+                      builder:
+                          (_) => TrashScreen(
+                            token: widget.token,
+                            userId: widget.userId,
+                          ),
+                    ),
                   );
                 },
               ),
@@ -257,7 +262,13 @@ class _TimeState extends State<Time> {
                   // 👉 마이페이지로 이동
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => MyPageScreen(token: widget.token)),
+                    MaterialPageRoute(
+                      builder:
+                          (_) => MyPageScreen(
+                            token: widget.token,
+                            userId: widget.userId,
+                          ),
+                    ),
                   );
                 },
               ),
@@ -276,11 +287,23 @@ class _TimeState extends State<Time> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildRoundedBox(context, Group(token: widget.token), 1),
+                    _buildRoundedBox(
+                      context,
+                      Group(token: widget.token, userId: widget.userId),
+                      1,
+                    ),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, Time(token:widget.token), 2),
+                    _buildRoundedBox(
+                      context,
+                      Time(token: widget.token, userId: widget.userId),
+                      2,
+                    ),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, Brand(token: widget.token), 3),
+                    _buildRoundedBox(
+                      context,
+                      Brand(token: widget.token, userId: widget.userId),
+                      3,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -356,13 +379,20 @@ class _TimeState extends State<Time> {
                   bottom: 92,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: gifticonSummaries.map((summary) => Text(
-                      summary,
-                      style: const TextStyle(fontSize: 12, color: Colors.black87),
-                    )).toList(),
+                    children:
+                        gifticonSummaries
+                            .map(
+                              (summary) => Text(
+                                summary,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            )
+                            .toList(),
                   ),
                 ),
-
               ],
             ),
           ),
@@ -409,7 +439,13 @@ class _TimeState extends State<Time> {
                   // ✅ 여기서 친구목록으로 이동!
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => FriendListScreen(token:widget.token)),
+                    MaterialPageRoute(
+                      builder:
+                          (_) => FriendListScreen(
+                            token: widget.token,
+                            userId: widget.userId,
+                          ),
+                    ),
                   );
                 },
                 child: Center(

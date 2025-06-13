@@ -4,8 +4,11 @@ import 'dart:io';
 import 'group.dart';
 
 class GroupCreateStep1 extends StatefulWidget {
-  final String token; 
-  const GroupCreateStep1({required this.token, super.key});
+  final String token;
+  final int userId;
+
+  const GroupCreateStep1({required this.token, required this.userId, Key? key})
+    : super(key: key);
 
   @override
   State<GroupCreateStep1> createState() => _GroupCreateStep1State();
@@ -18,9 +21,8 @@ class _GroupCreateStep1State extends State<GroupCreateStep1> {
 
   @override
   Widget build(BuildContext context) {
-    List<String> filteredFriends = friends
-        .where((friend) => friend.contains(searchQuery))
-        .toList();
+    List<String> filteredFriends =
+        friends.where((friend) => friend.contains(searchQuery)).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -71,28 +73,30 @@ class _GroupCreateStep1State extends State<GroupCreateStep1> {
               ),
             ),
             const SizedBox(height: 24),
-            ...filteredFriends.map((friend) => CheckboxListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    friend,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
+            ...filteredFriends.map(
+              (friend) => CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  friend,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
-                  value: selectedFriends.contains(friend),
-                  onChanged: (bool? value) {
-                    setState(() {
-                      if (value == true) {
-                        selectedFriends.add(friend);
-                      } else {
-                        selectedFriends.remove(friend);
-                      }
-                    });
-                  },
-                  activeColor: Colors.blue,
-                  checkColor: Colors.white,
-                )),
+                ),
+                value: selectedFriends.contains(friend),
+                onChanged: (bool? value) {
+                  setState(() {
+                    if (value == true) {
+                      selectedFriends.add(friend);
+                    } else {
+                      selectedFriends.remove(friend);
+                    }
+                  });
+                },
+                activeColor: Colors.blue,
+                checkColor: Colors.white,
+              ),
+            ),
           ],
         ),
       ),
@@ -101,10 +105,12 @@ class _GroupCreateStep1State extends State<GroupCreateStep1> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => GroupCreateStep2(
-                selectedFriends: selectedFriends,
-                token: widget.token, 
-              ),
+              builder:
+                  (_) => GroupCreateStep2(
+                    selectedFriends: selectedFriends,
+                    token: widget.token,
+                    userId: widget.userId,
+                  ),
             ),
           );
         },
@@ -118,12 +124,14 @@ class _GroupCreateStep1State extends State<GroupCreateStep1> {
 class GroupCreateStep2 extends StatefulWidget {
   final List<String> selectedFriends;
   final String token;
+  final int userId;
 
   const GroupCreateStep2({
-    super.key,
-    required this.selectedFriends,
     required this.token,
-  });
+    required this.userId,
+    required this.selectedFriends,
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<GroupCreateStep2> createState() => _GroupCreateStep2State();
@@ -169,10 +177,7 @@ class _GroupCreateStep2State extends State<GroupCreateStep2> {
           children: [
             const Text(
               '갤러리 이름을 입력하세요',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -188,10 +193,7 @@ class _GroupCreateStep2State extends State<GroupCreateStep2> {
             const SizedBox(height: 32),
             const Text(
               '갤러리 사진을 첨부해보세요!',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const Text(
               '*첨부하지 않으면 기본이미지로 설정됩니다',
@@ -200,9 +202,10 @@ class _GroupCreateStep2State extends State<GroupCreateStep2> {
             const SizedBox(height: 24),
             GestureDetector(
               onTap: _pickImage,
-              child: _selectedImage != null
-                  ? Image.file(_selectedImage!, height: 100)
-                  : const Icon(Icons.image_outlined, size: 64),
+              child:
+                  _selectedImage != null
+                      ? Image.file(_selectedImage!, height: 100)
+                      : const Icon(Icons.image_outlined, size: 64),
             ),
           ],
         ),
@@ -212,7 +215,11 @@ class _GroupCreateStep2State extends State<GroupCreateStep2> {
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(
-              builder: (_) => Group(token: widget.token), // ✅ token 전달
+              builder:
+                  (_) => Group(
+                    token: widget.token,
+                    userId: widget.userId,
+                  ), // ✅ token 전달
             ),
             (route) => false,
           );

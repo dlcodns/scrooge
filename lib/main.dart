@@ -21,11 +21,12 @@ void main() async {
 
   // ✅ 실제 token 값 전달
   const String dummyToken = 'sample_token_123'; // 이후 실제 로그인 시스템 연동 필요
+  const int dummyUserId = 1;
 
   runApp(
     ChangeNotifierProvider(
       create: (_) => GifticonState(),
-      child: MyApp(token: dummyToken),
+      child: MyApp(token: dummyToken, userId: dummyUserId),
     ),
   );
 
@@ -41,17 +42,17 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final String token;
-  const MyApp({super.key, required this.token});
+  final int userId;
+
+  const MyApp({super.key, required this.token, required this.userId});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Navigator Demo',
-      home: FirstPage(token: token), // ✅ token 전달
-      routes: {
-        '/message': (context) => const MessagePage(),
-      },
+      home: FirstPage(token: token, userId: userId), // ✅ token 전달
+      routes: {'/message': (context) => const MessagePage()},
     );
   }
 }

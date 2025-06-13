@@ -6,6 +6,7 @@ import 'brand.dart';
 import 'group_create.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_manage.dart';
+import 'screens/notification_screen.dart';
 
 Widget _buildRoundedBox(
   BuildContext context,
@@ -56,7 +57,9 @@ Widget _buildRoundedBox(
 
 class Group extends StatelessWidget {
   final String token;
-  const Group({required this.token, super.key});
+  final int userId;
+
+  const Group({required this.token, required this.userId, super.key});
 
   final List<Map<String, dynamic>> groupInfo = const [
     {"name": "가족방", "icon": Icons.family_restroom, "emoji": "😊"},
@@ -67,6 +70,7 @@ class Group extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("🧩 Group 화면에 전달된 userId: $userId");
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -85,22 +89,35 @@ class Group extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TrashScreen(token:token)), // ✅ token 제거된 버전 호출
+                    MaterialPageRoute(
+                      builder: (_) => TrashScreen(token: token, userId: userId),
+                    ), // ✅ token 제거된 버전 호출
                   );
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (_) =>
+                              NotificationScreen(token: token, userId: userId),
+                    ),
+                  );
                 },
               ),
+
               IconButton(
                 icon: Image.asset('assets/account.png'),
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => MyPageScreen(token:token)), // ✅ token 제거된 버전 호출
+                    MaterialPageRoute(
+                      builder:
+                          (_) => MyPageScreen(token: token, userId: userId),
+                    ), // ✅ token 제거된 버전 호출
                   );
                 },
               ),
@@ -117,11 +134,23 @@ class Group extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildRoundedBox(context, Group(token:token), 1),
+                    _buildRoundedBox(
+                      context,
+                      Group(token: token, userId: userId),
+                      1,
+                    ),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, Time(token:token), 2),
+                    _buildRoundedBox(
+                      context,
+                      Time(token: token, userId: userId),
+                      2,
+                    ),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, Brand(token:token), 3),
+                    _buildRoundedBox(
+                      context,
+                      Brand(token: token, userId: userId),
+                      3,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -130,36 +159,39 @@ class Group extends StatelessWidget {
                     crossAxisCount: 3,
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
-                    children: groupInfo.map((group) {
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  GroupGalleryPage(groupName: group["name"]),
+                    children:
+                        groupInfo.map((group) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => GroupGalleryPage(
+                                        groupName: group["name"],
+                                      ),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              children: [
+                                CircleAvatar(
+                                  radius: 30,
+                                  backgroundColor: Colors.grey.shade200,
+                                  child: Text(
+                                    group["emoji"],
+                                    style: const TextStyle(fontSize: 28),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  group["name"],
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ],
                             ),
                           );
-                        },
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 30,
-                              backgroundColor: Colors.grey.shade200,
-                              child: Text(
-                                group["emoji"],
-                                style: const TextStyle(fontSize: 28),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              group["name"],
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
+                        }).toList(),
                   ),
                 ),
               ],
@@ -172,7 +204,10 @@ class Group extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => GroupCreateStep1(token:token)),
+                  MaterialPageRoute(
+                    builder:
+                        (_) => GroupCreateStep1(token: token, userId: userId),
+                  ),
                 );
               },
               child: Container(
@@ -219,7 +254,10 @@ class Group extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => FriendListScreen(token:token)),
+                    MaterialPageRoute(
+                      builder:
+                          (_) => FriendListScreen(token: token, userId: userId),
+                    ),
                   );
                 },
                 child: Center(
