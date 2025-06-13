@@ -14,7 +14,9 @@ void main() {
   testWidgets('App launch test with token', (WidgetTester tester) async {
     // Build the app with a dummy token
     const String dummyToken = 'sample_token_123';
-    await tester.pumpWidget(MyApp(token: dummyToken));
+    const int dummyUserId = 1;
+
+    await tester.pumpWidget(MyApp(token: dummyToken, userId: dummyUserId));
 
     // You can verify a specific screen loads if needed, e.g. FirstPage contents.
     // For now, just ensure the widget tree builds.
