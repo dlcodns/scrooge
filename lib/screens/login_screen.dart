@@ -1,6 +1,7 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:scrooge/group.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,43 +15,51 @@ class _LoginScreenState extends State<LoginScreen> {
   final _idController = TextEditingController();
   final _pwController = TextEditingController();
   bool _obscure = true;
+  bool _isLoading = false;
 
-  Future<Map<String, String>?> login(String username, String password) async {
-    final url = Uri.parse('http://172.30.129.19:8080/api/users/login');
+  Future<void> _login() async {
+    setState(() => _isLoading = true);
+
+    final userId = _idController.text.trim();
+    final password = _pwController.text.trim();
+
+    final url = Uri.parse('http://192.168.26.122:8080/api/users/login');
+
 
     try {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': username, 'password': password}),
+        body: jsonEncode({'userId': userId, 'password': password}),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
-        final nickname = data['nickname'];
-        final id = data['id'];
 
-        if (token != null && id != null) {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('accessToken', token);
-          await prefs.setString('nickname', nickname ?? '');
-          await prefs.setInt('userId', id);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwtToken', token);
 
-          return {
-            'token': token,
-            'nickname': nickname ?? '',
-            'id': id.toString(),
-          };
-        }
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Group()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
+        );
       }
-
-      print("로그인 실패: ${response.statusCode} / ${response.body}");
-      return null;
-    } catch (e) {
-      print("로그인 중 오류 발생: $e");
-      return null;
-    }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Login error: $e');
+      debugPrint('📌 Stack trace: $stackTrace');
+        
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('서버 오류가 발생했습니다')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    } 
   }
 
   @override
@@ -81,49 +90,21 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
             SizedBox(
               width: MediaQuery.of(context).size.width * 0.9,
               height: 55,
               child: ElevatedButton(
-                onPressed: () async {
-                  final username = _idController.text.trim();
-                  final password = _pwController.text.trim();
-
-                  if (username.isEmpty || password.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('아이디와 비밀번호를 모두 입력해주세요')),
-                    );
-                    return;
-                  }
-
-                  final result = await login(username, password);
-
-                  if (result != null) {
-                    Navigator.pushReplacementNamed(
-                      context,
-                      '/preference',
-                      arguments: {
-                        'nickname': result['nickname'],
-                        'token': result['token'],
-                        'userId': int.parse(result['id']!),
-                      },
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('로그인에 실패했습니다. 다시 시도해주세요.')),
-                    );
-                  }
-                },
+                 onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF577BE5),
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.zero,
                   ),
                 ),
-                child: const Text(
-                  '로그인',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('로그인', style: TextStyle(color: Colors.white, fontSize: 20)),
               ),
             ),
             Row(

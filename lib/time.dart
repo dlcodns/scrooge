@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'group.dart';
@@ -11,7 +10,11 @@ import 'trash_manage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'screens/notification_screen.dart';
 import 'gifticon_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+
 
 Widget _buildRoundedBox(
   BuildContext context,
@@ -21,14 +24,13 @@ Widget _buildRoundedBox(
   String imagePath;
   Color boxColor = Colors.grey.shade300;
 
-  // number 값에 따라 이미지 파일 경로를 다르게 설정
   if (number == 1) {
-    imagePath = 'assets/group.png'; // 1번 박스 이미지
+    imagePath = 'assets/group.png';
   } else if (number == 2) {
-    imagePath = 'assets/time.png'; // 2번 박스 이미지
+    imagePath = 'assets/time.png'; 
     boxColor = const Color(0xFF7081F1);
   } else {
-    imagePath = 'assets/brand.png'; // 3번 박스 이미지
+    imagePath = 'assets/brand.png'; 
   }
 
   return GestureDetector(
@@ -37,8 +39,8 @@ Widget _buildRoundedBox(
         context,
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => destinationPage,
-          transitionDuration: Duration.zero, // 전환 시간 0
-          reverseTransitionDuration: Duration.zero, // 되돌아갈 때도 0
+          transitionDuration: Duration.zero, 
+          reverseTransitionDuration: Duration.zero, 
         ),
       );
     },
@@ -53,7 +55,7 @@ Widget _buildRoundedBox(
       child: Center(
         child: Image.asset(
           imagePath,
-          width: 24, // 이미지 크기 조정
+          width: 24, 
           height: 24,
           fit: BoxFit.contain,
         ),
@@ -63,10 +65,7 @@ Widget _buildRoundedBox(
 }
 
 class Time extends StatefulWidget {
-  final String token; // ✅ 추가
-  final int userId;
-
-  const Time({required this.token, required this.userId, super.key});
+  const Time({super.key});
 
   @override
   State<Time> createState() => _TimeState();
@@ -75,15 +74,17 @@ class Time extends StatefulWidget {
 class _TimeState extends State<Time> {
   List<String> gifticonSummaries = [];
 
+  @override
+  void initState() {
+    super.initState();
+  }
+
+
+
   final List<String> keywords = [
     '교환처',
     '유효기간',
-    // '주문번호',
-    '상품명',
-    // 'CU',
-    // 'GS25',
-    // '올리브영',
-    //'kakaotalk',
+    '상품명'
   ];
 
   void _updateGifticons(List<AssetEntity> resultImages) {
@@ -91,70 +92,99 @@ class _TimeState extends State<Time> {
     state.update(resultImages);
   }
 
-  Future<void> _sendGifticonToServer(String text) async {
-    final brand = _extractAfterKeyword(text, "교환처");
-    final dueDateStr = _extractAfterKeyword(text, "유효기간");
-    final orderNumber = _extractAfterKeyword(text, "주문번호");
-
-    if (brand == null || dueDateStr == null || orderNumber == null) return;
-
-    // final response = await http.post(
-    //   Uri.parse('http://192.168.84.121:8080/api/gifticons'),
-    //   headers: {"Content-Type": "application/json"},
-    //   body: jsonEncode({
-    //     "gifticonNumber": orderNumber,
-    //     "brand": brand,
-    //     "dueDate": dueDateStr,
-    //     "productName": null,
-    //     "whichRoom": null,
-    //     "whoPost": null, // 실제 ID로 대체
-    //   }),
-    // );
-
-    gifticonSummaries.add(
-      "${gifticonSummaries.length + 1}번 기프티콘: "
-      "gifticonNumber: $orderNumber, brand: $brand, dueDate: $dueDateStr, "
-      "productName: null, whichRoom: null, whoPost: null",
-    );
-
-    debugPrint("서버 전송 생략 — 임시 저장된 기프티콘 정보: \${gifticonSummaries.last}");
-    // debugPrint("서버 응답: ${response.statusCode}");
-  }
-
-  String? _extractAfterKeyword(String text, String keyword) {
+  String? getTextAfterKeyword(String text, String keyword) {
     final regex = RegExp('$keyword[:\\s]*([^\n]+)');
     final match = regex.firstMatch(text);
     return match?.group(1)?.trim();
   }
 
-  DateTime? _parseKoreanDate(String input) {
-    try {
-      final regex = RegExp(r'(\d{4})[년.-/ ]+(\d{1,2})[월.-/ ]+(\d{1,2})');
-      final match = regex.firstMatch(input);
-      if (match != null) {
-        final year = int.parse(match.group(1)!);
-        final month = int.parse(match.group(2)!);
-        final day = int.parse(match.group(3)!);
-        return DateTime(year, month, day);
-      }
-    } catch (_) {}
-    return null;
+  String? normalizeDate(String? raw) {
+  if (raw == null) return null;
+
+  final match = RegExp(r'(\d{4})[년.\- ]+(\d{1,2})[월.\- ]+(\d{1,2})[일.\- ]*').firstMatch(raw);
+  if (match != null) {
+    final year = match.group(1);
+    final month = match.group(2)!.padLeft(2, '0');
+    final day = match.group(3)!.padLeft(2, '0');
+    return "$year-$month-$day";
   }
+
+  return raw;
+}
+
+
+  String? extractGifticonNumber(String text) {
+    final match = RegExp(r'\d{4} \d{4} \d{4,8}').firstMatch(text);
+    return match?.group(0);
+  }
+
+
+
+  Future<void> _sendGifticonToServer(String text) async {
+    debugPrint("🧪 OCR 추출 내용:\n$text");
+
+    final brand = getTextAfterKeyword(text, "교환처");
+    final rawDueDate = getTextAfterKeyword(text, "유효기간");
+    final dueDateStr = normalizeDate(rawDueDate);
+    final orderNumber = extractGifticonNumber(text);
+
+
+
+    debugPrint("➡️ 추출 결과 확인:");
+    debugPrint("- brand: $brand");
+    debugPrint("- dueDate: $dueDateStr");
+    debugPrint("- orderNumber: $orderNumber");
+
+    if (brand == null || dueDateStr == null || orderNumber == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken'); // 토큰만 사용
+
+    if (token == null) {
+      debugPrint("❌ JWT 토큰 없음");
+      return;
+    }
+
+    final url = Uri.parse('http://192.168.26.122:8080/api/gifticon');
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode({
+        "gifticonNumber": orderNumber,
+        "brand": brand,
+        "dueDate": dueDateStr,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      gifticonSummaries.add(
+        // 사람이 보기 좋게 정리된 문자열
+        "${gifticonSummaries.length + 1}번 기프티콘:\n"
+        "- gifticonNumber: $orderNumber\n"
+        "- brand: $brand\n"
+        "- dueDate: $dueDateStr"
+      );
+      debugPrint("✅ 서버 저장 성공: ${gifticonSummaries.last}");
+    }
+    else {
+      debugPrint("❌ 서버 저장 실패: ${response.statusCode} / ${response.body}");
+    }
+  }
+
 
   Future<String> _callGoogleVisionAPI(Uint8List imageBytes) async {
     const apiKey = 'AIzaSyDtG9EgGBrKJzkWuAfNLabWZwNiqhV2tM8'; // 🔒 실제 API 키 입력
-    final url = Uri.parse(
-      'https://vision.googleapis.com/v1/images:annotate?key=$apiKey',
-    );
+    final url = Uri.parse('https://vision.googleapis.com/v1/images:annotate?key=$apiKey');
     final requestPayload = {
       "requests": [
         {
           "image": {"content": base64Encode(imageBytes)},
-          "features": [
-            {"type": "TEXT_DETECTION"},
-          ],
-        },
-      ],
+          "features": [{"type": "TEXT_DETECTION"}]
+        }
+      ]
     };
 
     final response = await http.post(
@@ -171,6 +201,9 @@ class _TimeState extends State<Time> {
     }
   }
 
+
+
+
   Future<void> _scanGallery() async {
     try {
       final permission = await PhotoManager.requestPermissionExtend();
@@ -179,9 +212,8 @@ class _TimeState extends State<Time> {
         return;
       }
 
-      final DateTime oneMonthAgo = DateTime.now().subtract(
-        const Duration(days: 1),
-      );
+      final DateTime oneMonthAgo = DateTime.now().subtract(const Duration(days: 1));
+
 
       final albums = await PhotoManager.getAssetPathList(
         type: RequestType.image,
@@ -192,11 +224,10 @@ class _TimeState extends State<Time> {
 
       if (albums.isEmpty) return;
 
-      final List<AssetEntity> allImages = await albums.first.getAssetListPaged(
-        page: 0,
-        size: 100,
-      );
+
+      final List<AssetEntity> allImages = await albums.first.getAssetListPaged(page: 0, size: 100);
       final List<AssetEntity> resultImages = [];
+
 
       for (final image in allImages) {
         final file = await image.originFile;
@@ -205,15 +236,15 @@ class _TimeState extends State<Time> {
         final bytes = await file.readAsBytes();
         final extractedText = await _callGoogleVisionAPI(bytes);
 
-        if (extractedText.contains("교환처") ||
-            extractedText.contains("유효기간") ||
-            extractedText.contains("주문번호")) {
+        if (extractedText.contains("교환처") || extractedText.contains("유효기간") || extractedText.contains("주문번호")) {
           resultImages.add(image);
           await _sendGifticonToServer(extractedText);
+
         }
       }
 
       _updateGifticons(resultImages); // Provider 상태 동기화
+
     } catch (e) {
       debugPrint("❌ 오류 발생: $e");
     }
@@ -221,6 +252,7 @@ class _TimeState extends State<Time> {
 
   @override
   Widget build(BuildContext context) {
+    
     final gifticonImages = Provider.of<GifticonState>(context).gifticons;
     return Scaffold(
       backgroundColor: Colors.white,
@@ -231,44 +263,34 @@ class _TimeState extends State<Time> {
           padding: const EdgeInsets.all(8.0),
           child: Image.asset('assets/logo.png', fit: BoxFit.contain),
         ),
-        actions: [
+       actions: [
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: Image.asset('assets/trash.png'),
-                onPressed: () {
+                onPressed: () async {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => TrashScreen(
-                            token: widget.token,
-                            userId: widget.userId,
-                          ),
-                    ),
+                    MaterialPageRoute(builder: (_) => const TrashScreen()),
                   );
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
+                onPressed: () async {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                  );
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/account.png'),
-                onPressed: () {
-                  // 👉 마이페이지로 이동
+                onPressed: () async {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => MyPageScreen(
-                            token: widget.token,
-                            userId: widget.userId,
-                          ),
-                    ),
+                    MaterialPageRoute(builder: (_) => const MyPageScreen()),
                   );
                 },
               ),
@@ -284,118 +306,104 @@ class _TimeState extends State<Time> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // 상단 라운드 버튼들
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildRoundedBox(
-                      context,
-                      Group(token: widget.token, userId: widget.userId),
-                      1,
-                    ),
+                    _buildRoundedBox(context, Group(), 1),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(
-                      context,
-                      Time(token: widget.token, userId: widget.userId),
-                      2,
-                    ),
+                    _buildRoundedBox(context, Time(), 2),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(
-                      context,
-                      Brand(token: widget.token, userId: widget.userId),
-                      3,
-                    ),
+                    _buildRoundedBox(context, Brand(), 3),
                   ],
                 ),
                 const SizedBox(height: 16),
+
+                // ✅ OCR 결과 요약 텍스트 출력
+                if (gifticonSummaries.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      border: Border.all(color: Colors.black12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: gifticonSummaries.map((summary) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          summary,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+
+                // 기프티콘 이미지 그리드
                 Expanded(
-                  child:
-                      gifticonImages.isEmpty
-                          ? const Center(child: Text("기프티콘이 없습니다"))
-                          : GridView.builder(
-                            itemCount: gifticonImages.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 4,
-                                  mainAxisSpacing: 4,
-                                ),
-                            itemBuilder: (context, index) {
-                              return FutureBuilder<Uint8List?>(
-                                future: gifticonImages[index]
-                                    .thumbnailDataWithSize(
-                                      const ThumbnailSize(500, 500),
-                                    ),
-                                builder: (_, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const Center(
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  } else if (snapshot.hasData) {
-                                    return GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (_) => GifticonViewer(
-                                                  asset: gifticonImages[index],
-                                                ),
+                  child: gifticonImages.isEmpty
+                      ? const Center(child: Text("기프티콘이 없습니다"))
+                      : GridView.builder(
+                          itemCount: gifticonImages.length,
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 4,
+                            mainAxisSpacing: 4,
+                          ),
+                          itemBuilder: (context, index) {
+                            return FutureBuilder<Uint8List?>(
+                              future: gifticonImages[index].thumbnailDataWithSize(
+                                const ThumbnailSize(500, 500),
+                              ),
+                              builder: (_, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return const Center(child: CircularProgressIndicator());
+                                } else if (snapshot.hasData) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => GifticonViewer(
+                                            asset: gifticonImages[index],
                                           ),
-                                        );
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          color: Colors.grey.shade200,
                                         ),
-                                        clipBehavior: Clip.hardEdge,
-                                        child: AspectRatio(
-                                          aspectRatio: 1, // ✅ 정사각형
-                                          child: Image.memory(
-                                            snapshot.data!,
-                                            fit: BoxFit.cover,
-                                            alignment:
-                                                Alignment.topCenter, // ✅ 윗부분 기준
-                                          ),
+                                      );
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.grey.shade200,
+                                      ),
+                                      clipBehavior: Clip.hardEdge,
+                                      child: AspectRatio(
+                                        aspectRatio: 1,
+                                        child: Image.memory(
+                                          snapshot.data!,
+                                          fit: BoxFit.cover,
+                                          alignment: Alignment.topCenter,
                                         ),
                                       ),
-                                    );
-                                  } else {
-                                    return const Icon(
-                                      Icons.image_not_supported,
-                                    );
-                                  }
-                                },
-                              );
-                            },
-                          ),
-                ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 92,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children:
-                        gifticonSummaries
-                            .map(
-                              (summary) => Text(
-                                summary,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                  ),
+                                    ),
+                                  );
+                                } else {
+                                  return const Icon(Icons.image_not_supported);
+                                }
+                              },
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
           ),
+
 
           // 오른쪽 아래 renewal 오버레이 버튼
           Positioned(
@@ -439,13 +447,7 @@ class _TimeState extends State<Time> {
                   // ✅ 여기서 친구목록으로 이동!
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => FriendListScreen(
-                            token: widget.token,
-                            userId: widget.userId,
-                          ),
-                    ),
+                    MaterialPageRoute(builder: (_) => FriendListScreen()),
                   );
                 },
                 child: Center(
