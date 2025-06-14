@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'trash_item.dart';
 
 Future<List<TrashItem>> fetchTrashList() async {
-  print("📡 API 요청 시작: http://172.30.1.18:8080/api/mypage/trash/me");
+  print("📡 API 요청 시작: http://192.168.26.252:8080/api/mypage/trash/me");
 
   try {
     final prefs = await SharedPreferences.getInstance();
@@ -12,7 +12,7 @@ Future<List<TrashItem>> fetchTrashList() async {
     print("🪪 불러온 토큰: $token");
 
     final response = await http.get(
-      Uri.parse('http://172.30.1.18:8080/api/mypage/trash/me'),
+      Uri.parse('http://192.168.26.252:8080/api/mypage/trash/me'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

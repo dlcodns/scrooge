@@ -18,7 +18,7 @@ class _FriendAddScreenState extends State<FriendAddScreen> {
     final receiverId = _controller.text.trim();
     if (receiverId.isEmpty) return;
 
-    final baseUrl = 'http://172.30.1.18:8080';
+    final baseUrl = 'http://192.168.26.252:8080';
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwtToken') ?? '';

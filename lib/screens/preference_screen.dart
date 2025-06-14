@@ -75,7 +75,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
       return;
     }
 
-    final url = Uri.parse('http://172.30.1.18:8080/api/preferences');
+    final url = Uri.parse('http://192.168.26.252:8080/api/preferences');
     final response = await http.post(
       url,
       headers: {
