@@ -242,19 +242,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 );
               },
             ),
-            Divider(thickness: 1.5, color: Colors.black),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: ElevatedButton.icon(
-                onPressed: testServerConnection,
-                icon: Icon(Icons.wifi),
-                label: Text("휴지통 서버 연결 테스트"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  minimumSize: Size(double.infinity, 40),
-                ),
-              ),
-            ),
             ListTile(
               leading: Icon(Icons.notifications, color: Colors.black),
               title: Text(

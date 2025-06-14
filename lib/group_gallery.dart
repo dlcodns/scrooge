@@ -161,6 +161,7 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
             builder: (_) => ImageDetailPage(
               imagePath: item["image"] ?? "",
               groupName: widget.groupName,
+              gifticonId: item["gifticonId"] ?? "",
             ),
           ),
         );
@@ -190,6 +191,7 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
             builder: (_) => ImageDetailPage(
               imagePath: item["image"] ?? "",
               groupName: widget.groupName,
+              gifticonId: item["gifticonId"] ?? "",
             ),
           ),
         );
