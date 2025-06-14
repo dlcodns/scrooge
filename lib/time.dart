@@ -74,6 +74,14 @@ class Time extends StatefulWidget {
 class _TimeState extends State<Time> {
   List<String> gifticonSummaries = [];
 
+  @override
+  void initState() {
+    super.initState();
+    // 테스트용 코드 제거 – 이제 실제 갤러리만 사용
+  }
+
+
+
   final List<String> keywords = [
     '교환처',
     '유효기간',
@@ -91,23 +99,43 @@ class _TimeState extends State<Time> {
     return match?.group(1)?.trim();
   }
 
-  String? get12DigitAboveKeyword(String text, String keyword) {
-    final lines = text.split('\n');
-    for (int i = 1; i < lines.length; i++) {
-      if (lines[i].contains(keyword)) {
-        final prevLine = lines[i - 1].trim();
-        final match = RegExp(r'\d{12}').firstMatch(prevLine);
-        return match?.group(0);
-      }
-    }
-    return null;
+  String? normalizeDate(String? raw) {
+  if (raw == null) return null;
+
+  // "2026년 05월 16일" → "2026-05-16"
+  final match = RegExp(r'(\d{4})[년.\- ]+(\d{1,2})[월.\- ]+(\d{1,2})[일.\- ]*').firstMatch(raw);
+  if (match != null) {
+    final year = match.group(1);
+    final month = match.group(2)!.padLeft(2, '0');
+    final day = match.group(3)!.padLeft(2, '0');
+    return "$year-$month-$day";
+  }
+
+  return raw; // 이미 ISO 형식이면 그대로 반환
+}
+
+
+  String? extractGifticonNumber(String text) {
+    final match = RegExp(r'\d{4} \d{4} \d{4,8}').firstMatch(text);
+    return match?.group(0);
   }
 
 
+
   Future<void> _sendGifticonToServer(String text) async {
-    final brand = getTextAfterKeyword(text, "교환처");           // 교환처 오른쪽
-    final dueDateStr = getTextAfterKeyword(text, "유효기간");   // 유효기간 오른쪽
-    final orderNumber = get12DigitAboveKeyword(text, "교환처"); // 교환처 위의 12자리 숫자
+    debugPrint("🧪 OCR 추출 내용:\n$text");
+
+    final brand = getTextAfterKeyword(text, "교환처");
+    final rawDueDate = getTextAfterKeyword(text, "유효기간");
+    final dueDateStr = normalizeDate(rawDueDate);
+    final orderNumber = extractGifticonNumber(text);
+
+
+
+    debugPrint("➡️ 추출 결과 확인:");
+    debugPrint("- brand: $brand");
+    debugPrint("- dueDate: $dueDateStr");
+    debugPrint("- orderNumber: $orderNumber");
 
     if (brand == null || dueDateStr == null || orderNumber == null) return;
 
@@ -119,7 +147,7 @@ class _TimeState extends State<Time> {
       return;
     }
 
-    final url = Uri.parse('http://192.168.26.122:8080/api/gifticon'); // 네 환경에 맞게 조정
+    final url = Uri.parse('http://192.168.26.122:8080/api/gifticon');
     final response = await http.post(
       url,
       headers: {
