@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:scrooge/group.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,6 +15,53 @@ class _LoginScreenState extends State<LoginScreen> {
   final _idController = TextEditingController();
   final _pwController = TextEditingController();
   bool _obscure = true;
+  bool _isLoading = false;
+
+  Future<void> _login() async {
+    setState(() => _isLoading = true);
+
+    final userId = _idController.text.trim();
+    final password = _pwController.text.trim();
+
+    final url = Uri.parse('http://192.168.26.122:8080/api/users/login');
+
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'userId': userId, 'password': password}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final token = data['token'];
+
+        // ⭐ 토큰 저장
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwtToken', token);
+
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Group()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
+        );
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Login error: $e');
+      debugPrint('📌 Stack trace: $stackTrace');
+        
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('서버 오류가 발생했습니다')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    } 
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,39 +97,18 @@ class _LoginScreenState extends State<LoginScreen> {
               width: MediaQuery.of(context).size.width * 0.9, // 화면의 90% 너비
               height: 55,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => Group()),
-                    //ui 통일을 위해 잠시 주석 처리 합니다다
-                    // if (_idController.text == 'test123' &&
-                    //     _pwController.text == 'Test123!') {
-                    //   // ⭐ 여기서 group.dart로 이동!
-                    //   Navigator.pushReplacement(
-                    //     context,
-                    //     MaterialPageRoute(builder: (context) => Group()),
-                    //   );
-                    // } else {
-                    //   ScaffoldMessenger.of(context).showSnackBar(
-                    //     const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
-                    //   );
-                    // }
-                  );
-                },
+                 onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF577BE5),
                   shape: const RoundedRectangleBorder(
-                    // 라운드 제거
                     borderRadius: BorderRadius.zero,
                   ),
                 ),
-                child: const Text(
-                  '로그인',
-                  style: TextStyle(color: Colors.white, fontSize: 20),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('로그인', style: TextStyle(color: Colors.white, fontSize: 20)),
               ),
             ),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

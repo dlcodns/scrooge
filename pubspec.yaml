@@ -38,14 +38,14 @@ dependencies:
   # 알림 및 시간
   flutter_local_notifications: ^19.2.1
   timezone: ^0.10.0
-  shared_preferences: ^2.2.2
+  shared_preferences: ^2.5.3
   intl: ^0.18.1
 
   # DB & 네트워크
   sqflite: ^2.2.8
   mysql_client: ^0.0.27
   path_provider: ^2.1.2
-  http: ^1.3.0
+  http: ^1.4.0
 
   # 이미지 및 사진
   photo_manager: ^3.0.0
@@ -59,6 +59,8 @@ dependencies:
   # 퍼미션/토스트
   permission_handler: ^11.0.0
   fluttertoast: ^8.2.12
+
+  jwt_decode: ^0.3.1
 
 dev_dependencies:
   flutter_test:
