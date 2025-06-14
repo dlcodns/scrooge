@@ -36,7 +36,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> signupUser() async {
     final url = Uri.parse(
-      'http://172.30.129.19:8080/api/users/signup',
+      'http://172.30.1.18:8080/api/users/signup',
     ); // 예: http://10.0.2.2:8080/api/users/signup
 
     final body = jsonEncode({

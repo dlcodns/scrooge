@@ -23,7 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final userId = _idController.text.trim();
     final password = _pwController.text.trim();
 
-    final url = Uri.parse('http://192.168.26.122:8080/api/users/login');
+    final url = Uri.parse('http://172.30.1.18:8080/api/users/login');
 
 
     try {

@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FriendAddSuccessScreen extends StatefulWidget {
   final String friendName;
-  final String token;
-  final int userId;
 
   const FriendAddSuccessScreen({
     super.key,
     required this.friendName,
-    required this.token,
-    required this.userId,
   });
 
   @override
@@ -35,11 +32,15 @@ class _FriendAddSuccessScreenState extends State<FriendAddSuccessScreen>
       curve: Curves.easeOutBack,
     );
 
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 2), () async {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwtToken') ?? '';
+      final userId = prefs.getInt('userId') ?? -1;
+
       Navigator.pushReplacementNamed(
         context,
         '/friend_list',
-        arguments: {'token': widget.token, 'userId': widget.userId},
+        arguments: {'token': token, 'userId': userId},
       );
     });
   }

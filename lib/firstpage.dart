@@ -12,11 +12,7 @@ import 'signup_in_screen.dart';
 import 'screens/friend_list_screen.dart';
 
 class FirstPage extends StatelessWidget {
-  final String token;
-  final int userId;
-
-  const FirstPage({required this.token, required this.userId, Key? key})
-    : super(key: key);
+  const FirstPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -52,78 +48,48 @@ class FirstPage extends StatelessWidget {
             final args = settings.arguments;
             if (args is Map<String, dynamic>) {
               final nickname = args['nickname'] as String? ?? '사용자';
-              final token = args['token'] as String;
-              final userId = args['userId'] as int;
               return MaterialPageRoute(
-                builder:
-                    (_) => PreferenceScreen(
-                      nickname: nickname,
-                      token: token,
-                      userId: userId,
-                    ),
+                builder: (_) => PreferenceScreen(),
               );
             }
 
           case '/friend_list':
-            final args = settings.arguments as Map<String, dynamic>;
-            final token = args['token'] as String;
-            final userId = args['userId'] as int;
             return MaterialPageRoute(
-              builder: (_) => FriendListScreen(token: token, userId: userId),
+              builder: (_) => const FriendListScreen(),
             );
 
           case '/friend_add_success':
             final args = settings.arguments as Map<String, dynamic>;
             final name = args['friendName'] as String;
-            final token = args['token'] as String;
-            final userId = args['userId'] as int;
             return MaterialPageRoute(
-              builder:
-                  (_) => FriendAddSuccessScreen(
-                    friendName: name,
-                    token: token,
-                    userId: userId,
-                  ),
+              builder: (_) => FriendAddSuccessScreen(friendName: name),
             );
 
           case '/friend_add':
-            final args = settings.arguments as Map<String, dynamic>;
-            final token = args['token'] as String;
-            final userId = args['userId'] as int;
             return MaterialPageRoute(
-              builder: (_) => FriendAddScreen(token: token, myUserId: userId),
+              builder: (_) => const FriendAddScreen(),
             );
 
           case '/friend_profile':
-            final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
-              builder:
-                  (_) => FriendProfileScreen(
-                    token: args['token'],
-                    userId: args['userId'],
-                  ),
+              builder: (_) => const FriendProfileScreen(),
             );
 
           case '/notifications':
-            final args = settings.arguments as Map<String, dynamic>;
-            final token = args['token'] as String;
-            final userId = args['userId'] as int;
-
             return MaterialPageRoute(
-              builder: (_) => NotificationScreen(token: token, userId: userId),
+              builder: (_) => const NotificationScreen(),
             );
 
           case '/main':
             return MaterialPageRoute(
-              builder: (_) => MainTabScreen(token: token, userId: userId),
+              builder: (_) => const MainTabScreen(),
             );
 
           default:
             return MaterialPageRoute(
-              builder:
-                  (_) => const Scaffold(
-                    body: Center(child: Text('404 - 페이지를 찾을 수 없습니다')),
-                  ),
+              builder: (_) => const Scaffold(
+                body: Center(child: Text('404 - 페이지를 찾을 수 없습니다')),
+              ),
             );
         }
       },

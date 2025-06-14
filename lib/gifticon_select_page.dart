@@ -28,7 +28,7 @@ class _GifticonSelectPageState extends State<GifticonSelectPage> {
     print("accessToken: $token");
 
     final response = await http.get(
-      Uri.parse('http://192.168.26.122:8080/api/group/my-gifticons'),
+      Uri.parse('http://172.30.1.18:8080/api/group/my-gifticons'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -47,7 +47,7 @@ class _GifticonSelectPageState extends State<GifticonSelectPage> {
     final token = prefs.getString('jwtToken');
 
     final response = await http.post(
-      Uri.parse('http://192.168.26.122:8080/api/group/add-gifticons'),
+      Uri.parse('http://172.30.1.18:8080/api/group/add-gifticons'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

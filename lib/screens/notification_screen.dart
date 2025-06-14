@@ -1,16 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class NotificationScreen extends StatefulWidget {
-  final String token;
-  final int userId;
-
-  const NotificationScreen({
-    super.key,
-    required this.token,
-    required this.userId,
-  });
+  const NotificationScreen({super.key});
 
   @override
   State<NotificationScreen> createState() => _NotificationScreenState();
@@ -18,19 +12,30 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   List<Map<String, dynamic>> _notifications = [];
+  late int userId;
+  late String token;
 
   @override
   void initState() {
     super.initState();
-    fetchNotifications();
+    _loadTokenAndUserId();
+  }
+
+  Future<void> _loadTokenAndUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('jwtToken') ?? '';
+    userId = prefs.getInt('userId') ?? -1;
+    if (token.isNotEmpty && userId != -1) {
+      fetchNotifications();
+    }
   }
 
   Future<void> fetchNotifications() async {
     final response = await http.get(
-      Uri.parse('http://172.30.129.19:8080/api/notifications/${widget.userId}'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+      Uri.parse('http://172.30.1.18:8080/api/notifications/$userId'),
+      headers: {'Authorization': 'Bearer $token'},
     );
-    print("🧪 요청하려는 receiverId: ${widget.userId}");
+    print("🧪 요청하려는 receiverId: $userId");
 
     if (response.statusCode == 200) {
       final allNotifs = List<Map<String, dynamic>>.from(
@@ -38,20 +43,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
       );
 
       setState(() {
-        _notifications =
-            allNotifs
-                .where(
-                  (n) =>
-                      // 내가 받은 알림이면서
-                      n['receiverId'] == widget.userId &&
-                      // FRIEND_REQUEST의 경우 sender가 내가 아닌 것만 (내가 나한테 보내는 알림 방지)
-                      (n['type'] != 'FRIEND_REQUEST' ||
-                          n['senderId'] != widget.userId),
-                )
-                .toList();
+        _notifications = allNotifs.where((n) =>
+            n['receiverId'] == userId &&
+            (n['type'] != 'FRIEND_REQUEST' || n['senderId'] != userId)).toList();
       });
 
-      print("📡 요청 ID: ${widget.userId}");
+      print("📡 요청 ID: $userId");
       print("📡 받은 응답: ${response.statusCode}");
       print("📡 응답 내용: ${response.body}");
     }
@@ -64,10 +61,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
         action == 'accept' ? '/api/friends/accept' : '/api/friends/reject';
 
     final response = await http.post(
-      Uri.parse('http://172.30.129.19:8080$url'),
+      Uri.parse('http://172.30.1.18:8080$url'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode({'requestId': requestId}),
     );
@@ -78,7 +75,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       });
 
       if (action == 'accept') {
-        // 👇 여기에 추가
         Navigator.pop(context, 'refresh');
       }
     }
@@ -100,7 +96,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: _notifications.length,
-
         itemBuilder: (context, index) {
           final notif = _notifications[index];
           final type = notif['type'];
@@ -108,31 +103,25 @@ class _NotificationScreenState extends State<NotificationScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(notif['message']),
-              if (type == 'FRIEND_REQUEST' &&
-                  notif['receiverId'] == widget.userId) ...[
+              Text(notif['message'] ?? ''),
+              if (type == 'FRIEND_REQUEST' && notif['receiverId'] == userId) ...[
                 Row(
                   children: [
                     TextButton(
-                      onPressed:
-                          () =>
-                              handleFriendRequest('accept', notif['targetId']),
+                      onPressed: () => handleFriendRequest('accept', notif['targetId']),
                       child: const Text('수락하기'),
                     ),
                     const SizedBox(width: 8),
                     TextButton(
-                      onPressed:
-                          () =>
-                              handleFriendRequest('reject', notif['targetId']),
+                      onPressed: () => handleFriendRequest('reject', notif['targetId']),
                       child: const Text('거절하기'),
                     ),
                   ],
                 ),
               ] else if (type == 'ROOM_INVITE') ...[
-                // 추후 방 초대 관련 처리
                 TextButton(
                   onPressed: () {
-                    // 방 초대 수락 or 이동
+                    // 방 초대 수락 or 이동 처리 예정
                   },
                   child: const Text('방 입장하기'),
                 ),

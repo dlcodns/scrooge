@@ -4,13 +4,10 @@ import 'group_gallery.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_service.dart';
 import 'trash_item.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TrashScreen extends StatefulWidget {
-  final String token;
-  final int userId;
-
-  const TrashScreen({required this.token, required this.userId, Key? key})
-    : super(key: key);
+  const TrashScreen({Key? key}) : super(key: key);
 
   @override
   _TrashScreenState createState() => _TrashScreenState();
@@ -22,7 +19,15 @@ class _TrashScreenState extends State<TrashScreen> {
   @override
   void initState() {
     super.initState();
-    trashListFuture = fetchTrashList(widget.token);
+    _loadTrashList();
+  }
+
+  Future<void> _loadTrashList() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+    setState(() {
+      trashListFuture = fetchTrashList();
+    });
   }
 
   String formatDate(DateTime date) {
@@ -49,11 +54,7 @@ class _TrashScreenState extends State<TrashScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black),
-            onPressed: () {
-              setState(() {
-                trashListFuture = fetchTrashList(widget.token);
-              });
-            },
+            onPressed: _loadTrashList,
           ),
         ],
       ),
@@ -90,7 +91,7 @@ class _TrashScreenState extends State<TrashScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${item.whoUse}님이 친구방에서 사용했습니다.', // 또는 item.location 사용 가능
+                      '${item.whoUse}님이 친구방에서 사용했습니다.',
                       style: const TextStyle(fontSize: 14),
                     ),
                     const SizedBox(height: 8),
@@ -112,7 +113,6 @@ class _TrashScreenState extends State<TrashScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 4),
                     if (daysUntilDelete >= 0)
                       Text(
@@ -134,7 +134,7 @@ class _TrashScreenState extends State<TrashScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.photo_album), label: '콘갤러리'),
           BottomNavigationBarItem(icon: Icon(Icons.people), label: '친구 목록'),
         ],
-        onTap: (index) {
+        onTap: (index) async {
           if (index == 0) {
             Navigator.push(
               context,
@@ -143,14 +143,13 @@ class _TrashScreenState extends State<TrashScreen> {
               ),
             );
           } else if (index == 1) {
+            final prefs = await SharedPreferences.getInstance();
+            final token = prefs.getString('jwtToken') ?? '';
+            final userId = prefs.getInt('userId') ?? 0;
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder:
-                    (_) => FriendListScreen(
-                      token: widget.token,
-                      userId: widget.userId,
-                    ),
+                builder: (_) => FriendListScreen(),
               ),
             );
           }

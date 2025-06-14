@@ -1,16 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FriendProfileScreen extends StatefulWidget {
-  final String token;
-  final int userId;
-
-  const FriendProfileScreen({
-    super.key,
-    required this.token,
-    required this.userId,
-  });
+  const FriendProfileScreen({super.key});
 
   @override
   State<FriendProfileScreen> createState() => _FriendProfileScreenState();
@@ -23,19 +17,29 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
   String second = '';
   String third = '';
   bool isLoading = true;
+  int? userId;
 
   @override
   void initState() {
     super.initState();
     _isFavorite = false;
-    fetchFriendPreference();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      userId = args?['userId'];
+      fetchFriendPreference();
+    });
   }
 
   Future<void> fetchFriendPreference() async {
-    print("📥 친구 프로필 요청 ID: ${widget.userId}");
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+
+    if (userId == null) return;
+
+    print("📥 친구 프로필 요청 ID: $userId");
     final response = await http.get(
-      Uri.parse('http://172.30.129.19:8080/api/preferences/${widget.userId}'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+      Uri.parse('http://172.30.1.18:8080/api/preferences/$userId'),
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     print("📡 응답 코드: ${response.statusCode}");
@@ -51,13 +55,12 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
         isLoading = false;
       });
     } else {
-      // 오류 처리
       setState(() {
         isLoading = false;
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('친구 정보를 불러오지 못했습니다.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('친구 정보를 불러오지 못했습니다.')),
+      );
     }
   }
 
@@ -70,27 +73,26 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            backgroundColor: Colors.white,
-            title: const Text('친구 삭제'),
-            content: const Text('정말로 이 친구를 삭제하시겠습니까?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('취소'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('친구가 삭제되었습니다.')));
-                },
-                child: const Text('삭제'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        title: const Text('친구 삭제'),
+        content: const Text('정말로 이 친구를 삭제하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
           ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('친구가 삭제되었습니다.')),
+              );
+            },
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -118,51 +120,49 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                 _showDeleteConfirmation();
               }
             },
-            itemBuilder:
-                (BuildContext context) => [
-                  const PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Text('친구 삭제'),
-                  ),
-                ],
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: Text('친구 삭제'),
+              ),
+            ],
           ),
         ],
       ),
       backgroundColor: Colors.white,
-      body:
-          isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        '$nickname 님은 $first 을(를) 제일 좋아해요!',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                        textAlign: TextAlign.center,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$nickname 님은 $first 을(를) 제일 좋아해요!',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
                       ),
-                      const SizedBox(height: 24),
-                      const CircleAvatar(
-                        radius: 60,
-                        backgroundColor: Colors.grey,
-                        child: Icon(
-                          Icons.person,
-                          size: 60,
-                          color: Colors.white,
-                        ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    const CircleAvatar(
+                      radius: 60,
+                      backgroundColor: Colors.grey,
+                      child: Icon(
+                        Icons.person,
+                        size: 60,
+                        color: Colors.white,
                       ),
-                      const SizedBox(height: 24),
-                      if (second.isNotEmpty) Text('2순위  $second'),
-                      if (third.isNotEmpty) Text('3순위  $third'),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (second.isNotEmpty) Text('2순위  $second'),
+                    if (third.isNotEmpty) Text('3순위  $third'),
+                  ],
                 ),
               ),
+            ),
     );
   }
 }

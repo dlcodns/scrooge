@@ -84,7 +84,7 @@ class _GroupState extends State<Group> {
     final token = prefs.getString('jwtToken');
 
     final response = await http.get(
-      Uri.parse('http://192.168.26.122:8080/api/group/my-rooms'),
+      Uri.parse('http://172.30.1.18:8080/api/group/my-rooms'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -123,7 +123,6 @@ class _GroupState extends State<Group> {
 
   @override
   Widget build(BuildContext context) {
-    print("🧩 Group 화면에 전달된 userId: $userId");
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -177,23 +176,11 @@ class _GroupState extends State<Group> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildRoundedBox(
-                      context,
-                      Group(token: token, userId: userId),
-                      1,
-                    ),
+                    _buildRoundedBox(context, Group(), 1),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(
-                      context,
-                      Time(token: token, userId: userId),
-                      2,
-                    ),
+                    _buildRoundedBox(context, Time(), 2),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(
-                      context,
-                      Brand(token: token, userId: userId),
-                      3,
-                    ),
+                    _buildRoundedBox(context, Brand(), 3),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -245,7 +232,7 @@ class _GroupState extends State<Group> {
                   context,
                   MaterialPageRoute(
                     builder:
-                        (_) => GroupCreateStep1(token: token, userId: userId),
+                        (_) => GroupCreateStep1(),
                   ),
                 );
               },
@@ -295,7 +282,7 @@ class _GroupState extends State<Group> {
                     context,
                     MaterialPageRoute(
                       builder:
-                          (_) => FriendListScreen(token: token, userId: userId),
+                          (_) => FriendListScreen(),
                     ),
                   );
                 },

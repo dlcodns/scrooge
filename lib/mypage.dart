@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decode/jwt_decode.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'notification.dart';
 import 'profile.dart';
 import 'edit_password.dart';
@@ -33,11 +34,8 @@ class Gifticon {
 }
 
 class MyPageScreen extends StatefulWidget {
-  final String token;
-  final int userId;
+  const MyPageScreen({Key? key}) : super(key: key);
 
-  const MyPageScreen({required this.token, required this.userId, Key? key})
-    : super(key: key);
 
   @override
   _MyPageScreenState createState() => _MyPageScreenState();
@@ -50,13 +48,16 @@ class _MyPageScreenState extends State<MyPageScreen> {
   List<String> notificationSummaries = [];
   List<int> notificationIds = [];
   List<Gifticon> myGifticons = [];
+  late String token;
+  late int userId;
+
 
   @override
   void initState() {
     super.initState();
     initializeNotification();
     _loadSavedNotifications();
-    _loadGifticons();
+    _loadTokenAndGifticons();
   }
 
   Future<void> _loadSavedNotifications() async {
@@ -72,11 +73,22 @@ class _MyPageScreenState extends State<MyPageScreen> {
     await saveNotifications(notificationSummaries, notificationIds);
   }
 
-  Future<void> _loadGifticons() async {
+  Future<void> _loadTokenAndGifticons() async {
+    final prefs = await SharedPreferences.getInstance();
+  token = prefs.getString('jwtToken') ?? '';
+  userId = prefs.getInt('userId') ?? -1;
+
+
+    if (token == null || userId == null) {
+      // 로그인 상태 아님 처리
+      return;
+    }
+
+    // 이후 기존 함수 호출
     try {
-      Map<String, dynamic> payload = Jwt.parseJwt(widget.token);
+      Map<String, dynamic> payload = Jwt.parseJwt(token);
       String myUserId = payload['sub'];
-      final gifticons = await fetchMyGifticons(widget.token, myUserId);
+      final gifticons = await fetchMyGifticons(token, myUserId);
       setState(() {
         myGifticons = gifticons;
       });
@@ -154,7 +166,7 @@ class _MyPageScreenState extends State<MyPageScreen> {
       final res = await http.get(
         Uri.parse('$baseUrl/api/mypage/trash/me'),
         headers: {
-          'Authorization': 'Bearer ${widget.token}',
+          'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
       );
@@ -359,13 +371,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => EditPasswordScreen(
-                          token: widget.token,
-                          userId: widget.userId,
-                        ),
+                    builder: (context) => const EditPasswordScreen(), // 전달 안 함
                   ),
                 );
+
               },
             ),
             ListTile(
@@ -375,13 +384,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder:
-                        (context) => TrashScreen(
-                          token: widget.token,
-                          userId: widget.userId,
-                        ),
+                    builder: (context) => const TrashScreen(), // 전달 안 함
                   ),
                 );
+
               },
             ),
             if (notificationSummaries.isNotEmpty)

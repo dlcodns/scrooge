@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+//api 연결이 없어서 토큰 사용 안하는 중
 import 'mypage.dart';
 import 'dart:async';
 
 class SetNewPasswordScreen extends StatefulWidget {
-  final String token;
-  final int userId;
-
-  const SetNewPasswordScreen({
-    required this.token,
-    required this.userId,
-    Key? key,
-  }) : super(key: key);
+  const SetNewPasswordScreen({Key? key}) : super(key: key);
 
   @override
   _SetNewPasswordScreenState createState() => _SetNewPasswordScreenState();
@@ -18,8 +13,7 @@ class SetNewPasswordScreen extends StatefulWidget {
 
 class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
   final TextEditingController newPasswordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   bool obscureNewPassword = true;
   bool obscureConfirmPassword = true;
   bool isMismatch = false;
@@ -73,9 +67,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                 border: OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: Icon(
-                    obscureNewPassword
-                        ? Icons.visibility_off
-                        : Icons.visibility,
+                    obscureNewPassword ? Icons.visibility_off : Icons.visibility,
                   ),
                   onPressed: () {
                     setState(() {
@@ -87,9 +79,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
               onChanged: (value) {
                 setState(() {
                   isPasswordValid = passwordRegex.hasMatch(value);
-                  isMismatch =
-                      newPasswordController.text !=
-                      confirmPasswordController.text;
+                  isMismatch = newPasswordController.text != confirmPasswordController.text;
                 });
               },
             ),
@@ -105,9 +95,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     border: OutlineInputBorder(),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
+                        obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
                       ),
                       onPressed: () {
                         setState(() {
@@ -118,9 +106,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   ),
                   onChanged: (_) {
                     setState(() {
-                      isMismatch =
-                          newPasswordController.text !=
-                          confirmPasswordController.text;
+                      isMismatch = newPasswordController.text != confirmPasswordController.text;
                     });
                   },
                 ),
@@ -141,24 +127,19 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
             Column(
               children: [
                 ElevatedButton(
-                  onPressed:
-                      isFormValid
-                          ? () {
-                            setState(() {
-                              isMismatch = false;
-                            });
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => PasswordChangedScreen(
-                                      token: widget.token,
-                                      userId: widget.userId,
-                                    ),
-                              ),
-                            );
-                          }
-                          : null,
+                  onPressed: isFormValid
+                      ? () {
+                          setState(() {
+                            isMismatch = false;
+                          });
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PasswordChangedScreen(),
+                            ),
+                          );
+                        }
+                      : null,
                   child: Text(
                     "변경하기",
                     style: TextStyle(
@@ -168,8 +149,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        isFormValid ? Colors.indigo[400] : Colors.grey,
+                    backgroundColor: isFormValid ? Colors.indigo[400] : Colors.grey,
                     padding: EdgeInsets.symmetric(
                       vertical: screenHeight * 0.018,
                     ),
@@ -205,14 +185,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 }
 
 class PasswordChangedScreen extends StatefulWidget {
-  final String token;
-  final int userId;
-
-  const PasswordChangedScreen({
-    required this.token,
-    required this.userId,
-    Key? key,
-  }) : super(key: key);
+  const PasswordChangedScreen({Key? key}) : super(key: key);
 
   @override
   _PasswordChangedScreenState createState() => _PasswordChangedScreenState();
@@ -226,9 +199,7 @@ class _PasswordChangedScreenState extends State<PasswordChangedScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder:
-              (context) =>
-                  MyPageScreen(token: widget.token, userId: widget.userId),
+          builder: (context) => const MyPageScreen(),
         ),
       );
     });

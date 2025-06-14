@@ -1,11 +1,11 @@
-// ✅ token을 전달하지 않고 FirstPage를 단순 호출하려다 발생한 오류 수정
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'gifticon_state.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'pushalarm_message.dart';
-import 'firstpage.dart'; // 시작화면
+import 'firstpage.dart';
 import 'notification.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -19,14 +19,10 @@ void main() async {
   final NotificationAppLaunchDetails? notificationAppLaunchDetails =
       await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
 
-  // ✅ 실제 token 값 전달
-  const String dummyToken = 'sample_token_123'; // 이후 실제 로그인 시스템 연동 필요
-  const int dummyUserId = 1;
-
   runApp(
     ChangeNotifierProvider(
       create: (_) => GifticonState(),
-      child: MyApp(token: dummyToken, userId: dummyUserId),
+      child: const MyApp(),
     ),
   );
 
@@ -41,17 +37,24 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  final String token;
-  final int userId;
+  const MyApp({super.key});
 
-  const MyApp({super.key, required this.token, required this.userId});
+  Future<String?> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('jwtToken');
+  }
+
+  Future<int?> _getUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('userId');
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Navigator Demo',
-      home: FirstPage(token: token, userId: userId), // ✅ token 전달
+      home: const FirstPage(),
       routes: {'/message': (context) => const MessagePage()},
     );
   }

@@ -1,16 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:scrooge/screens/friend_add_success_screen.dart';
 
 class FriendAddScreen extends StatefulWidget {
-  final String token;
-  final int myUserId;
-  const FriendAddScreen({
-    super.key,
-    required this.token,
-    required this.myUserId,
-  });
+  const FriendAddScreen({super.key});
 
   @override
   State<FriendAddScreen> createState() => _FriendAddScreenState();
@@ -23,14 +18,16 @@ class _FriendAddScreenState extends State<FriendAddScreen> {
     final receiverId = _controller.text.trim();
     if (receiverId.isEmpty) return;
 
-    final baseUrl = 'http://172.30.129.19:8080';
+    final baseUrl = 'http://172.30.1.18:8080';
 
-    // 1. 친구 요청 보내기
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+
     final response = await http.post(
       Uri.parse('$baseUrl/api/friends/request'),
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode({'receiverUserId': receiverId}),
     );
@@ -40,12 +37,7 @@ class _FriendAddScreenState extends State<FriendAddScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder:
-                (_) => FriendAddSuccessScreen(
-                  friendName: receiverId,
-                  token: widget.token,
-                  userId: widget.myUserId,
-                ),
+            builder: (_) => FriendAddSuccessScreen(friendName: receiverId),
           ),
         );
       } catch (e) {
@@ -53,9 +45,9 @@ class _FriendAddScreenState extends State<FriendAddScreen> {
         print('원본 응답: ${response.body}');
       }
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('친구 요청에 실패했습니다')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('친구 요청에 실패했습니다')),
+      );
     }
   }
 

@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
-import 'new_password.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'new_password.dart';
 
 class EditPasswordScreen extends StatefulWidget {
-  final String token;
-  final int userId;
+  const EditPasswordScreen({Key? key}) : super(key: key);
 
-  const EditPasswordScreen({
-    required this.token,
-    required this.userId,
-    Key? key,
-  }) : super(key: key);
   @override
   _EditPasswordScreenState createState() => _EditPasswordScreenState();
 }
@@ -19,6 +13,22 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool obscureText = true;
   bool isPasswordWrong = false;
+  String token = '';
+  int userId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAuthInfo();
+  }
+
+  Future<void> _loadAuthInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      token = prefs.getString('jwtToken') ?? '';
+      userId = prefs.getInt('userId') ?? 0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,16 +42,15 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
         elevation: 0,
         centerTitle: true,
         leading: const BackButton(color: Colors.black),
-        title: Text(
+        title: const Text(
           '비밀번호 변경',
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-
       body: Padding(
         padding: EdgeInsets.symmetric(
           horizontal: screenWidth * 0.06,
@@ -101,13 +110,10 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder:
-                              (context) => SetNewPasswordScreen(
-                                token: widget.token,
-                                userId: widget.userId,
-                              ),
+                          builder: (context) => const SetNewPasswordScreen(), // ✅ 파라미터 제거
                         ),
                       );
+
                     }
                   },
                   child: Text(

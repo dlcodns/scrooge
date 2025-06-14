@@ -56,10 +56,8 @@ Widget _buildRoundedBox(
 }
 
 class Brand extends StatelessWidget {
-  final String token; // ✅ 추가
-  final int userId;
+  const Brand({super.key});
 
-  const Brand({required this.token, required this.userId, super.key});
 
   final List<Map<String, dynamic>> brandInfo = const [
     {"name": "스타벅스", "image": "assets/starbucks.png"},
@@ -89,9 +87,7 @@ class Brand extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => TrashScreen(token: token, userId: userId),
-                    ),
+                    MaterialPageRoute(builder: (_) => TrashScreen()),
                   );
                 },
               ),
@@ -107,10 +103,7 @@ class Brand extends StatelessWidget {
                   // 👉 마이페이지로 이동
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => MyPageScreen(token: token, userId: userId),
-                    ),
+                    MaterialPageRoute(builder: (_) => MyPageScreen()),
                   );
                 },
               ),
@@ -127,23 +120,11 @@ class Brand extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _buildRoundedBox(
-                  context,
-                  Group(token: token, userId: userId),
-                  1,
-                ),
+                _buildRoundedBox(context, Group(), 1),
                 const SizedBox(width: 8),
-                _buildRoundedBox(
-                  context,
-                  Time(token: token, userId: userId),
-                  2,
-                ),
+                _buildRoundedBox(context, Time(), 2),
                 const SizedBox(width: 8),
-                _buildRoundedBox(
-                  context,
-                  Brand(token: token, userId: userId),
-                  3,
-                ),
+                _buildRoundedBox(context, Brand(), 3),
               ],
             ),
             const SizedBox(height: 16),
@@ -232,13 +213,7 @@ class Brand extends StatelessWidget {
                   // ✅ 여기서 친구목록으로 이동!
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) => FriendListScreen(
-                            token: token, // ✅ 실제 값으로 채워줘야 함
-                            userId: userId, // ✅ 실제 값으로 채워줘야 함
-                          ),
-                    ),
+                    MaterialPageRoute(builder: (_) => FriendListScreen()),
                   );
                 },
                 child: Center(

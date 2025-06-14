@@ -60,7 +60,7 @@ class _GroupCreateStep1State extends State<GroupCreateStep1> {
       "memberIds": memberIds,
     });
 
-    final url = Uri.parse('http://192.168.26.122:8080/api/group/create');
+    final url = Uri.parse('http://172.30.1.18:8080/api/group/create');
     final response = await http.post(
       url,
       headers: {

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scrooge/mypage.dart';
 import '../group.dart';
 import '../trash_manage.dart';
@@ -22,11 +23,7 @@ class Friend {
 }
 
 class FriendListScreen extends StatefulWidget {
-  final String token;
-  final int userId;
-
-  const FriendListScreen({required this.token, required this.userId, Key? key})
-    : super(key: key);
+  const FriendListScreen({Key? key}) : super(key: key);
 
   @override
   State<FriendListScreen> createState() => _FriendListScreenState();
@@ -35,6 +32,7 @@ class FriendListScreen extends StatefulWidget {
 class _FriendListScreenState extends State<FriendListScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Friend> _allFriends = [];
+  int? myUserId;
 
   @override
   void initState() {
@@ -43,25 +41,28 @@ class _FriendListScreenState extends State<FriendListScreen> {
   }
 
   Future<void> fetchFriendList() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+    myUserId = prefs.getInt('userId');
+
     final response = await http.get(
-      Uri.parse('http://172.30.129.19:8080/api/friends'),
-      headers: {'Authorization': 'Bearer ${widget.token}'},
+      Uri.parse('http://172.30.1.18:8080/api/friends'),
+      headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
       final List<dynamic> json = jsonDecode(response.body);
       setState(() {
-        _allFriends =
-            json.map((item) {
-              final prefs = item['preferences'] as List<dynamic>;
-              return Friend(
-                id: item['id'],
-                name: item['nickname'],
-                preference: prefs.isNotEmpty ? prefs[0] : '',
-                second: prefs.length > 1 ? prefs[1] : null,
-                third: prefs.length > 2 ? prefs[2] : null,
-              );
-            }).toList();
+        _allFriends = json.map((item) {
+          final prefs = item['preferences'] as List<dynamic>;
+          return Friend(
+            id: item['id'],
+            name: item['nickname'],
+            preference: prefs.isNotEmpty ? prefs[0] : '',
+            second: prefs.length > 1 ? prefs[1] : null,
+            third: prefs.length > 2 ? prefs[2] : null,
+          );
+        }).toList();
       });
     }
   }
@@ -73,23 +74,19 @@ class _FriendListScreenState extends State<FriendListScreen> {
   }
 
   void _navigateToProfile(Friend friend) async {
-    print("📍 프로필 진입: ${friend.name}, ID: ${friend.id}");
-    final result = await Navigator.pushNamed(
+    Navigator.pushNamed(
       context,
       '/friend_profile',
-      arguments: {'token': widget.token, 'userId': friend.id},
+      arguments: {'userId': friend.id},
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final query = _searchController.text;
-    final matchingFriends =
-        query.isEmpty
-            ? []
-            : _allFriends
-                .where((friend) => friend.name.contains(query))
-                .toList();
+    final matchingFriends = query.isEmpty
+        ? []
+        : _allFriends.where((friend) => friend.name.contains(query)).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -109,11 +106,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder:
-                          (_) => TrashScreen(
-                            token: widget.token,
-                            userId: widget.userId,
-                          ),
+                      builder: (_) => TrashScreen(),
                     ),
                   );
                 },
@@ -124,11 +117,10 @@ class _FriendListScreenState extends State<FriendListScreen> {
                   final result = await Navigator.pushNamed(
                     context,
                     '/notifications',
-                    arguments: {'token': widget.token, 'userId': widget.userId},
                   );
 
                   if (result == 'refresh') {
-                    fetchFriendList(); // ✅ 알림 수락 시 목록 갱신
+                    fetchFriendList();
                   }
                 },
               ),
@@ -138,11 +130,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder:
-                          (_) => MyPageScreen(
-                            token: widget.token,
-                            userId: widget.userId,
-                          ),
+                      builder: (_) => MyPageScreen(),
                     ),
                   );
                 },
@@ -178,14 +166,8 @@ class _FriendListScreenState extends State<FriendListScreen> {
                 Container(
                   width: double.infinity,
                   color: Colors.grey[200],
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: const Text(
-                    '검색 결과',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: const Text('검색 결과', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 SizedBox(
                   height: 120,
@@ -204,10 +186,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                             CircleAvatar(
                               radius: 30,
                               backgroundColor: Colors.deepPurple.shade100,
-                              child: const Icon(
-                                Icons.person,
-                                color: Colors.deepPurple,
-                              ),
+                              child: const Icon(Icons.person, color: Colors.deepPurple),
                             ),
                             const SizedBox(height: 4),
                             Text(friend.name),
@@ -218,7 +197,6 @@ class _FriendListScreenState extends State<FriendListScreen> {
                   ),
                 ),
               ],
-
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 child: Row(
@@ -249,13 +227,8 @@ class _FriendListScreenState extends State<FriendListScreen> {
             right: 24,
             child: GestureDetector(
               onTap: () {
-                Navigator.pushNamed(
-                  context,
-                  '/friend_add',
-                  arguments: {'token': widget.token, 'userId': widget.userId},
-                );
+                Navigator.pushNamed(context, '/friend_add');
               },
-
               child: Container(
                 width: 56,
                 height: 56,
@@ -290,11 +263,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder:
-                          (_) =>
-                              Group(token: widget.token, userId: widget.userId),
-                    ),
+                    MaterialPageRoute(builder: (_) => Group()),
                   );
                 },
                 child: Center(

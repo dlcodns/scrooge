@@ -1,20 +1,11 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../group.dart';
 
 class PreferenceScreen extends StatefulWidget {
-  final String nickname;
-  final String token;
-  final int userId;
-
-  const PreferenceScreen({
-    required this.nickname,
-    required this.token,
-    required this.userId,
-    super.key,
-  });
+  const PreferenceScreen({super.key});
 
   @override
   State<PreferenceScreen> createState() => _PreferenceScreenState();
@@ -44,11 +35,21 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
   };
 
   List<String?> selectedKeywords = [null, null, null];
+  late int userId;
+  late String token;
+  String nickname = '';
 
   @override
   void initState() {
     super.initState();
-    // 통신 필요 없으니 아무것도 안 해도 됨
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString('jwtToken') ?? '';
+    userId = prefs.getInt('userId') ?? -1;
+    nickname = prefs.getString('nickname') ?? '';
   }
 
   void toggleKeyword(String keyword) {
@@ -74,12 +75,12 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
       return;
     }
 
-    final url = Uri.parse('http://172.30.129.19:8080/api/preferences');
+    final url = Uri.parse('http://172.30.1.18:8080/api/preferences');
     final response = await http.post(
       url,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode({
         'firstKeywordId': keywordIdMap[selectedKeywords[0]]!,
@@ -92,7 +93,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => Group(token: widget.token, userId: widget.userId),
+          builder: (_) => Group(),
         ),
       );
     } else {
@@ -101,7 +102,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
       ).showSnackBar(const SnackBar(content: Text('저장에 실패했습니다. 다시 시도해주세요')));
     }
 
-    print("📦 선호 저장 후 이동하는 userId: ${widget.userId}");
+    print("📦 선호 저장 후 이동하는 userId: $userId");
   }
 
   @override
@@ -129,7 +130,7 @@ class _PreferenceScreenState extends State<PreferenceScreen> {
               const SizedBox(height: 24),
               Center(
                 child: Text(
-                  "${widget.nickname}님이 선호하는\n기프티콘을 알려주세요!",
+                  "$nickname님이 선호하는\n기프티콘을 알려주세요!",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
