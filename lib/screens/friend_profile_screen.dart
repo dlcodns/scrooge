@@ -4,7 +4,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FriendProfileScreen extends StatefulWidget {
-  const FriendProfileScreen({super.key});
+  final int userId;
+
+  const FriendProfileScreen({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<FriendProfileScreen> createState() => _FriendProfileScreenState();
@@ -17,28 +22,22 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
   String second = '';
   String third = '';
   bool isLoading = true;
-  int? userId;
 
   @override
   void initState() {
     super.initState();
     _isFavorite = false;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-      userId = args?['userId'];
-      fetchFriendPreference();
-    });
+    fetchFriendPreference();
   }
 
   Future<void> fetchFriendPreference() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwtToken') ?? '';
 
-    if (userId == null) return;
+    print("📥 친구 프로필 요청 ID: ${widget.userId}");
 
-    print("📥 친구 프로필 요청 ID: $userId");
     final response = await http.get(
-      Uri.parse('http://192.168.26.252:8080/api/preferences/$userId'),
+      Uri.parse('http://192.168.26.252:8080/api/preferences/${widget.userId}'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -55,9 +54,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
         isLoading = false;
       });
     } else {
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('친구 정보를 불러오지 못했습니다.')),
       );
@@ -150,11 +147,7 @@ class _FriendProfileScreenState extends State<FriendProfileScreen> {
                     const CircleAvatar(
                       radius: 60,
                       backgroundColor: Colors.grey,
-                      child: Icon(
-                        Icons.person,
-                        size: 60,
-                        color: Colors.white,
-                      ),
+                      child: Icon(Icons.person, size: 60, color: Colors.white),
                     ),
                     const SizedBox(height: 24),
                     if (second.isNotEmpty) Text('2순위  $second'),

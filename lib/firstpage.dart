@@ -71,9 +71,11 @@ class FirstPage extends StatelessWidget {
             );
 
           case '/friend_profile':
+            final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
-              builder: (_) => const FriendProfileScreen(),
+              builder: (_) => FriendProfileScreen(userId: args['userId']),
             );
+
 
           case '/notifications':
             return MaterialPageRoute(

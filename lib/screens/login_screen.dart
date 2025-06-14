@@ -20,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     setState(() => _isLoading = true);
 
-    final userId = _idController.text.trim();
+    final loginId = _idController.text.trim(); // <- loginId
     final password = _pwController.text.trim();
 
     final url = Uri.parse('http://192.168.26.252:8080/api/users/login');
@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'userId': userId, 'password': password}),
+        body: jsonEncode({'userId': loginId, 'password': password}),
       );
 
       if (response.statusCode == 200) {
@@ -42,26 +42,30 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('jwtToken', token);
         await prefs.setInt('userId', userPk);
         await prefs.setString('nickname', nickname);
+        await prefs.setString('loginId', loginId);
 
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Group()),
         );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
+        );
       }
-
-
     } catch (e, stackTrace) {
       debugPrint('❌ Login error: $e');
       debugPrint('📌 Stack trace: $stackTrace');
-        
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('서버 오류가 발생했습니다')),
       );
     } finally {
       setState(() => _isLoading = false);
-    } 
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
