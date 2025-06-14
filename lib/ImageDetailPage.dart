@@ -4,10 +4,11 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 Future<void> saveImageToGallery(String assetPath) async {
-  // Android 13 이상 권한 요청
-  final status = await Permission.photos.request(); // Android 13 이상 대응
+  final status = await Permission.photos.request(); // Android 13 이상
   final legacyStatus = await Permission.storage.request(); // Android 12 이하
 
   if (!status.isGranted && !legacyStatus.isGranted) {
@@ -16,11 +17,9 @@ Future<void> saveImageToGallery(String assetPath) async {
   }
 
   try {
-    // assets 이미지 로드
     final ByteData bytes = await rootBundle.load(assetPath);
     final Uint8List list = bytes.buffer.asUint8List();
 
-    // 저장
     final result = await ImageGallerySaverPlus.saveImage(
       list,
       name: "gifticon_${DateTime.now().millisecondsSinceEpoch}",
@@ -38,12 +37,43 @@ Future<void> saveImageToGallery(String assetPath) async {
   }
 }
 
-
 class ImageDetailPage extends StatelessWidget {
   final String imagePath;
   final String groupName;
+  final String gifticonId;
 
-  const ImageDetailPage({super.key, required this.imagePath, required this.groupName});
+  const ImageDetailPage({
+    super.key,
+    required this.imagePath,
+    required this.groupName,
+    required this.gifticonId,
+  });
+
+  Future<void> markAsUsed(BuildContext context) async {
+    final url = Uri.parse("http://192.168.0.17:8080/api/mypage/trash");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+          // "Authorization": "Bearer YOUR_TOKEN", // 필요한 경우 추가
+        },
+        body: jsonEncode({
+          "gifticonId": gifticonId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        Fluttertoast.showToast(msg: "사용 완료로 처리되었습니다.");
+        Navigator.pop(context);
+      } else {
+        Fluttertoast.showToast(msg: "처리 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "오류 발생: ${e.toString()}");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +116,7 @@ class ImageDetailPage extends StatelessWidget {
                   },
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text("이미지 저장", style: TextStyle(color: Colors.white),),
+                    child: Text("이미지 저장", style: TextStyle(color: Colors.white)),
                   ),
                 ),
                 ElevatedButton(
@@ -95,11 +125,11 @@ class ImageDetailPage extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () {
-                    //휴지통 가게 하는 로직직
+                    markAsUsed(context); // ✅ gifticonId만 전송
                   },
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text("사용 완료",  style: TextStyle(color: Colors.white),),
+                    child: Text("사용 완료", style: TextStyle(color: Colors.white)),
                   ),
                 ),
               ],

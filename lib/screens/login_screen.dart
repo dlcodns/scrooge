@@ -17,7 +17,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscure = true;
 
   Future<String?> login(String username, String password) async {
-    final url = Uri.parse('http://192.168.0.4:8080/api/users/login');
+    final url = Uri.parse('http://192.168.0.17:8080/api/users/login');
 
     try {
       final response = await http.post(

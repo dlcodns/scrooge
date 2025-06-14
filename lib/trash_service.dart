@@ -3,12 +3,12 @@ import 'package:http/http.dart' as http;
 import 'trash_item.dart';
 
 Future<List<TrashItem>> fetchTrashList(String token) async {
-  print("📡 API 요청 시작: http://192.168.0.4:8080/api/mypage/trash/me");
+  print("📡 API 요청 시작: http://192.168.0.17:8080/api/mypage/trash/me");
 print("🪪 전달된 토큰: $token");
 
 try {
   final response = await http.get(
-    Uri.parse('http://192.168.0.4:8080/api/mypage/trash/me'),
+    Uri.parse('http://192.168.0.17:8080/api/mypage/trash/me'),
     headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',

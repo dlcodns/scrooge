@@ -91,6 +91,7 @@ class _BrandGalleryPageState extends State<BrandGalleryPage> {
             builder: (_) => ImageDetailPage(
               imagePath: item["image"] ?? "",
               groupName: widget.brandName,
+              gifticonId: item["gifticonId"] ?? "",
             ),
           ),
         );
@@ -120,6 +121,7 @@ class _BrandGalleryPageState extends State<BrandGalleryPage> {
             builder: (_) => ImageDetailPage(
               imagePath: item["image"] ?? "",
               groupName: widget.brandName,
+              gifticonId: item["gifticonId"] ?? "",
             ),
           ),
         );

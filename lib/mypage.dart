@@ -144,35 +144,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
     return "http://10.0.2.2:8080";
   }
 
-  Future<void> testServerConnection() async {
-    try {
-      final baseUrl = await getLocalServerBaseUrl();
-      final res = await http.get(
-        Uri.parse('$baseUrl/api/mypage/trash/me'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
-      if (res.statusCode == 200) {
-        print("✅ 서버 응답 성공: ${res.body}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("서버 연결 성공 ✅")),
-        );
-      } else {
-        print("❌ 서버 오류: ${res.statusCode}, ${res.body}");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("서버 오류: ${res.statusCode}")),
-        );
-      }
-    } catch (e) {
-      print("❌ 네트워크 오류: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("네트워크 연결 실패 ❌")),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -208,19 +179,6 @@ class _MyPageScreenState extends State<MyPageScreen> {
                   MaterialPageRoute(builder: (context) => ProfileDetailScreen()),
                 );
               },
-            ),
-            Divider(thickness: 1.5, color: Colors.black),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: ElevatedButton.icon(
-                onPressed: testServerConnection,
-                icon: Icon(Icons.wifi),
-                label: Text("휴지통 서버 연결 테스트"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  minimumSize: Size(double.infinity, 40),
-                ),
-              ),
             ),
             ListTile(
               leading: Icon(Icons.notifications, color: Colors.black),
