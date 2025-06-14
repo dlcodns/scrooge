@@ -25,6 +25,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
     final prefs = await SharedPreferences.getInstance();
     token = prefs.getString('jwtToken') ?? '';
     userId = prefs.getInt('userId') ?? -1;
+
+  print('📦 불러온 userId: $userId');
+  print('📦 불러온 token: $token');
+
     if (token.isNotEmpty && userId != -1) {
       fetchNotifications();
     }
@@ -43,10 +47,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
       );
 
       setState(() {
-        _notifications = allNotifs.where((n) =>
-            n['receiverId'] == userId &&
-            (n['type'] != 'FRIEND_REQUEST' || n['senderId'] != userId)).toList();
-      });
+  _notifications = allNotifs;
+});
+
+
 
       print("📡 요청 ID: $userId");
       print("📡 받은 응답: ${response.statusCode}");

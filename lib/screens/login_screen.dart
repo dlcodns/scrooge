@@ -35,20 +35,22 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final token = data['token'];
+        final userPk = data['id'];
+        final nickname = data['nickname'];
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwtToken', token);
+        await prefs.setInt('userId', userPk);
+        await prefs.setString('nickname', nickname);
 
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => Group()),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('아이디 또는 비밀번호가 잘못되었습니다')),
-        );
       }
+
+
     } catch (e, stackTrace) {
       debugPrint('❌ Login error: $e');
       debugPrint('📌 Stack trace: $stackTrace');
