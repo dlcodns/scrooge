@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'ImageDetailPage.dart';
-import 'image_ocr.dart';
+import 'gifticon_select_page.dart';
 
 class GroupGalleryPage extends StatefulWidget {
   final String groupName;
@@ -31,12 +30,21 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
 
   final List<String> members = ["박형우", "송영은"];
 
-  void _pickGifticonImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      // TODO: 저장 및 표시 추가
-      debugPrint("선택된 이미지 경로: ${picked.path}");
+  void _openGifticonSelectPage() async {
+    // groupName → groupId로 변경이 필요합니다.
+    // 임시로 예시 숫자 1을 넣어둠 (실제 그룹 ID 전달하도록 수정해야 함)
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GifticonSelectPage(groupId: 1), // 여기에 진짜 groupId 넘기기
+      ),
+    );
+
+    if (result == true) {
+      // 기프티콘 등록 성공 후 처리 (예: 다시 불러오기 등)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('기프티콘이 등록되었습니다.')),
+      );
     }
   }
 
@@ -135,7 +143,7 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
             bottom: 24,
             right: 24,
             child: GestureDetector(
-              onTap: _pickGifticonImage,
+              onTap: _openGifticonSelectPage,
               child: Image.asset('assets/gift.png', width: 56, height: 56),
             ),
           ),

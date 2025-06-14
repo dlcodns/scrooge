@@ -6,6 +6,10 @@ import 'brand.dart';
 import 'group_create.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_manage.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 Widget _buildRoundedBox(
   BuildContext context,
@@ -63,16 +67,51 @@ class Group extends StatefulWidget {
 }
 
 class _GroupState extends State<Group> {
-  final List<Map<String, dynamic>> groupInfo = const [
-    {"name": "가족방", "icon": Icons.family_restroom, "emoji": "😊"},
-    {"name": "친구방", "icon": Icons.people, "emoji": "😎"},
-    {"name": "연인방", "icon": Icons.favorite, "emoji": "🥰"},
-    {"name": "회사방", "icon": Icons.business, "emoji": "💼"},
+  List<Map<String, dynamic>> groupInfo = []; // 서버에서 받아올 그룹 목록
+
+  final List<Color> colorList = [ // 랜덤 색상 목록
+    Colors.blue.shade100,
+    Colors.pink.shade100,
+    Colors.green.shade100,
+    Colors.orange.shade100,
+    Colors.purple.shade100,
+    Colors.teal.shade100,
+    Colors.red.shade100,
   ];
+
+  Future<void> fetchGroupRooms() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken');
+
+    final response = await http.get(
+      Uri.parse('http://192.168.26.122:8080/api/group/my-rooms'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(utf8.decode(response.bodyBytes));
+      setState(() {
+        groupInfo = data.map((group) {
+          final color = colorList[group['id'] % colorList.length];
+          return {
+            'id': group['id'],
+            'name': group['roomName'],
+            'color': color,
+          };
+        }).toList();
+      });
+    } else {
+      print('❌ 그룹 불러오기 실패: ${response.body}');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    fetchGroupRooms();
     if (widget.showToastMessage) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -153,7 +192,7 @@ class _GroupState extends State<Group> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => GroupGalleryPage(groupName: group["name"]),
+                              builder: (_) => GroupGalleryPage(groupName: group["name"]), // 필요시 groupId도 넘겨줘
                             ),
                           );
                         },
@@ -161,10 +200,10 @@ class _GroupState extends State<Group> {
                           children: [
                             CircleAvatar(
                               radius: 30,
-                              backgroundColor: Colors.grey.shade200,
+                              backgroundColor: group['color'],
                               child: Text(
-                                group["emoji"],
-                                style: const TextStyle(fontSize: 28),
+                                group["name"][0], // 첫 글자만 표시
+                                style: const TextStyle(fontSize: 20, color: Colors.white),
                               ),
                             ),
                             const SizedBox(height: 6),
@@ -176,6 +215,7 @@ class _GroupState extends State<Group> {
                         ),
                       );
                     }).toList(),
+
                   ),
                 ),
               ],
