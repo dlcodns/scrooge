@@ -54,15 +54,33 @@ Widget _buildRoundedBox(
   );
 }
 
-class Group extends StatelessWidget {
-  const Group({super.key});
+class Group extends StatefulWidget {
+  final bool showToastMessage;
+  const Group({super.key, this.showToastMessage = false});
 
+  @override
+  State<Group> createState() => _GroupState();
+}
+
+class _GroupState extends State<Group> {
   final List<Map<String, dynamic>> groupInfo = const [
     {"name": "가족방", "icon": Icons.family_restroom, "emoji": "😊"},
     {"name": "친구방", "icon": Icons.people, "emoji": "😎"},
     {"name": "연인방", "icon": Icons.favorite, "emoji": "🥰"},
     {"name": "회사방", "icon": Icons.business, "emoji": "💼"},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.showToastMessage) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('방이 생성되었습니다.')),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,7 +102,7 @@ class Group extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const TrashScreen()), // ✅ token 제거된 버전 호출
+                    MaterialPageRoute(builder: (_) => const TrashScreen()),
                   );
                 },
               ),
@@ -99,7 +117,7 @@ class Group extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const MyPageScreen()), // ✅ token 제거된 버전 호출
+                    MaterialPageRoute(builder: (_) => const MyPageScreen()),
                   );
                 },
               ),
@@ -135,8 +153,7 @@ class Group extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  GroupGalleryPage(groupName: group["name"]),
+                              builder: (_) => GroupGalleryPage(groupName: group["name"]),
                             ),
                           );
                         },

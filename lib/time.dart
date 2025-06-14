@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:photo_manager/photo_manager.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'group.dart';
@@ -12,6 +11,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'gifticon_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 
@@ -77,12 +77,7 @@ class _TimeState extends State<Time> {
   final List<String> keywords = [
     '교환처',
     '유효기간',
-    // '주문번호',
-    '상품명',
-    // 'CU',
-    // 'GS25',
-    // '올리브영',
-    //'kakaotalk',
+    '상품명'
   ];
 
   void _updateGifticons(List<AssetEntity> resultImages) {
@@ -90,57 +85,67 @@ class _TimeState extends State<Time> {
     state.update(resultImages);
   }
 
-
-  Future<void> _sendGifticonToServer(String text) async {
-    final brand = _extractAfterKeyword(text, "교환처");
-    final dueDateStr = _extractAfterKeyword(text, "유효기간");
-    final orderNumber = _extractAfterKeyword(text, "주문번호");
-
-    if (brand == null || dueDateStr == null || orderNumber == null) return;
-
-    // final response = await http.post(
-    //   Uri.parse('http://192.168.84.121:8080/api/gifticons'),
-    //   headers: {"Content-Type": "application/json"},
-    //   body: jsonEncode({
-    //     "gifticonNumber": orderNumber,
-    //     "brand": brand,
-    //     "dueDate": dueDateStr,
-    //     "productName": null,
-    //     "whichRoom": null,
-    //     "whoPost": null, // 실제 ID로 대체
-    //   }),
-    // );
-
-    gifticonSummaries.add(
-  "${gifticonSummaries.length + 1}번 기프티콘: "
-  "gifticonNumber: $orderNumber, brand: $brand, dueDate: $dueDateStr, "
-  "productName: null, whichRoom: null, whoPost: null"
-);
-
-    debugPrint("서버 전송 생략 — 임시 저장된 기프티콘 정보: \${gifticonSummaries.last}");
-    // debugPrint("서버 응답: ${response.statusCode}");
-  }
-
-
-  String? _extractAfterKeyword(String text, String keyword) {
+  String? getTextAfterKeyword(String text, String keyword) {
     final regex = RegExp('$keyword[:\\s]*([^\n]+)');
     final match = regex.firstMatch(text);
     return match?.group(1)?.trim();
   }
 
-
-  DateTime? _parseKoreanDate(String input) {
-    try {
-      final regex = RegExp(r'(\d{4})[년.-/ ]+(\d{1,2})[월.-/ ]+(\d{1,2})');
-      final match = regex.firstMatch(input);
-      if (match != null) {
-        final year = int.parse(match.group(1)!);
-        final month = int.parse(match.group(2)!);
-        final day = int.parse(match.group(3)!);
-        return DateTime(year, month, day);
+  String? get12DigitAboveKeyword(String text, String keyword) {
+    final lines = text.split('\n');
+    for (int i = 1; i < lines.length; i++) {
+      if (lines[i].contains(keyword)) {
+        final prevLine = lines[i - 1].trim();
+        final match = RegExp(r'\d{12}').firstMatch(prevLine);
+        return match?.group(0);
       }
-    } catch (_) {}
+    }
     return null;
+  }
+
+
+  Future<void> _sendGifticonToServer(String text) async {
+    final brand = getTextAfterKeyword(text, "교환처");           // 교환처 오른쪽
+    final dueDateStr = getTextAfterKeyword(text, "유효기간");   // 유효기간 오른쪽
+    final orderNumber = get12DigitAboveKeyword(text, "교환처"); // 교환처 위의 12자리 숫자
+
+    if (brand == null || dueDateStr == null || orderNumber == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken'); // 토큰만 사용
+
+    if (token == null) {
+      debugPrint("❌ JWT 토큰 없음");
+      return;
+    }
+
+    final url = Uri.parse('http://192.168.26.122:8080/api/gifticon'); // 네 환경에 맞게 조정
+    final response = await http.post(
+      url,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode({
+        "gifticonNumber": orderNumber,
+        "brand": brand,
+        "dueDate": dueDateStr,
+      }),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      gifticonSummaries.add(
+        // 사람이 보기 좋게 정리된 문자열
+        "${gifticonSummaries.length + 1}번 기프티콘:\n"
+        "- gifticonNumber: $orderNumber\n"
+        "- brand: $brand\n"
+        "- dueDate: $dueDateStr"
+      );
+      debugPrint("✅ 서버 저장 성공: ${gifticonSummaries.last}");
+    }
+    else {
+      debugPrint("❌ 서버 저장 실패: ${response.statusCode} / ${response.body}");
+    }
   }
 
 
@@ -169,6 +174,7 @@ class _TimeState extends State<Time> {
       return '';
     }
   }
+
 
 
 
@@ -272,6 +278,7 @@ class _TimeState extends State<Time> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // 상단 라운드 버튼들
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -283,88 +290,92 @@ class _TimeState extends State<Time> {
                   ],
                 ),
                 const SizedBox(height: 16),
+
+                // ✅ OCR 결과 요약 텍스트 출력
+                if (gifticonSummaries.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      border: Border.all(color: Colors.black12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: gifticonSummaries.map((summary) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(
+                          summary,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ),
+
+                // 기프티콘 이미지 그리드
                 Expanded(
-                  child:
-                      gifticonImages.isEmpty
-                          ? const Center(child: Text("기프티콘이 없습니다"))
-                          : GridView.builder(
-                            itemCount: gifticonImages.length,
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3,
-                                  crossAxisSpacing: 4,
-                                  mainAxisSpacing: 4,
-                                ),
-                            itemBuilder: (context, index) {
-                              return FutureBuilder<Uint8List?>(
-                                future: gifticonImages[index]
-                                    .thumbnailDataWithSize(
-                                      const ThumbnailSize(500, 500),
-                                    ),
-                                builder: (_, snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const Center(
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  } else if (snapshot.hasData) {
-                                    return GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (_) => GifticonViewer(
-                                                  asset: gifticonImages[index],
-                                                ),
+                  child: gifticonImages.isEmpty
+                      ? const Center(child: Text("기프티콘이 없습니다"))
+                      : GridView.builder(
+                          itemCount: gifticonImages.length,
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 4,
+                            mainAxisSpacing: 4,
+                          ),
+                          itemBuilder: (context, index) {
+                            return FutureBuilder<Uint8List?>(
+                              future: gifticonImages[index].thumbnailDataWithSize(
+                                const ThumbnailSize(500, 500),
+                              ),
+                              builder: (_, snapshot) {
+                                if (snapshot.connectionState == ConnectionState.waiting) {
+                                  return const Center(child: CircularProgressIndicator());
+                                } else if (snapshot.hasData) {
+                                  return GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => GifticonViewer(
+                                            asset: gifticonImages[index],
                                           ),
-                                        );
-                                      },
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                          color: Colors.grey.shade200,
                                         ),
-                                        clipBehavior: Clip.hardEdge,
-                                        child: AspectRatio(
-                                          aspectRatio: 1, // ✅ 정사각형
-                                          child: Image.memory(
-                                            snapshot.data!,
-                                            fit: BoxFit.cover,
-                                            alignment:
-                                                Alignment.topCenter, // ✅ 윗부분 기준
-                                          ),
+                                      );
+                                    },
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(8),
+                                        color: Colors.grey.shade200,
+                                      ),
+                                      clipBehavior: Clip.hardEdge,
+                                      child: AspectRatio(
+                                        aspectRatio: 1,
+                                        child: Image.memory(
+                                          snapshot.data!,
+                                          fit: BoxFit.cover,
+                                          alignment: Alignment.topCenter,
                                         ),
                                       ),
-                                    );
-                                  } else {
-                                    return const Icon(
-                                      Icons.image_not_supported,
-                                    );
-                                  }
-                                },
-                              );
-                            },
-                          ),
+                                    ),
+                                  );
+                                } else {
+                                  return const Icon(Icons.image_not_supported);
+                                }
+                              },
+                            );
+                          },
+                        ),
                 ),
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 92,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: gifticonSummaries.map((summary) => Text(
-                      summary,
-                      style: const TextStyle(fontSize: 12, color: Colors.black87),
-                    )).toList(),
-                  ),
-                ),
-
               ],
             ),
           ),
+
 
           // 오른쪽 아래 renewal 오버레이 버튼
           Positioned(
