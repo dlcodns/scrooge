@@ -7,12 +7,16 @@ import 'screens/friend_add_success_screen.dart';
 import 'screens/add_friend_screen.dart';
 import 'screens/friend_profile_screen.dart';
 import 'screens/main_tab_screen.dart';
-import 'screens/notification_screen.dart'; // 추가
+import 'screens/notification_screen.dart'; // 알림
 import 'signup_in_screen.dart';
 import 'screens/friend_list_screen.dart';
 
 class FirstPage extends StatelessWidget {
-  const FirstPage({super.key});
+  final String token;
+  final int userId;
+
+  const FirstPage({required this.token, required this.userId, Key? key})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -31,48 +35,89 @@ class FirstPage extends StatelessWidget {
         switch (settings.name) {
           case '/':
             return MaterialPageRoute(builder: (_) => const SignupInScreen());
+
           case '/login':
             return MaterialPageRoute(builder: (_) => const LoginScreen());
+
           case '/signup':
             return MaterialPageRoute(builder: (_) => const SignupScreen());
+
           case '/signup_complete':
             final nickname = settings.arguments as String? ?? '사용자';
             return MaterialPageRoute(
               builder: (_) => SignupCompleteScreen(nickname: nickname),
             );
+
           case '/preference':
-            final nickname = settings.arguments as String? ?? '사용자';
-            return MaterialPageRoute(
-              builder: (_) => PreferenceScreen(nickname: nickname),
-            );
+            final args = settings.arguments;
+            if (args is Map<String, dynamic>) {
+              final nickname = args['nickname'] as String? ?? '사용자';
+              final token = args['token'] as String;
+              final userId = args['userId'] as int;
+              return MaterialPageRoute(
+                builder:
+                    (_) => PreferenceScreen(
+                      nickname: nickname,
+                      token: token,
+                      userId: userId,
+                    ),
+              );
+            }
+
           case '/friend_list':
-            return MaterialPageRoute(builder: (_) => const FriendListScreen());
-          case '/friend_add_success':
-            final name = settings.arguments as String;
+            final args = settings.arguments as Map<String, dynamic>;
+            final token = args['token'] as String;
+            final userId = args['userId'] as int;
             return MaterialPageRoute(
-              builder: (_) => FriendAddSuccessScreen(friendName: name),
+              builder: (_) => FriendListScreen(token: token, userId: userId),
             );
+
+          case '/friend_add_success':
+            final args = settings.arguments as Map<String, dynamic>;
+            final name = args['friendName'] as String;
+            final token = args['token'] as String;
+            final userId = args['userId'] as int;
+            return MaterialPageRoute(
+              builder:
+                  (_) => FriendAddSuccessScreen(
+                    friendName: name,
+                    token: token,
+                    userId: userId,
+                  ),
+            );
+
           case '/friend_add':
-            return MaterialPageRoute(builder: (_) => const FriendAddScreen());
+            final args = settings.arguments as Map<String, dynamic>;
+            final token = args['token'] as String;
+            final userId = args['userId'] as int;
+            return MaterialPageRoute(
+              builder: (_) => FriendAddScreen(token: token, myUserId: userId),
+            );
+
           case '/friend_profile':
             final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
               builder:
                   (_) => FriendProfileScreen(
-                    name: args['name'],
-                    firstPreference: args['first'],
-                    secondPreference: args['second'],
-                    thirdPreference: args['third'],
-                    isFavorite: args['isFavorite'],
+                    token: args['token'],
+                    userId: args['userId'],
                   ),
             );
+
           case '/notifications':
+            final args = settings.arguments as Map<String, dynamic>;
+            final token = args['token'] as String;
+            final userId = args['userId'] as int;
+
             return MaterialPageRoute(
-              builder: (_) => const NotificationScreen(),
+              builder: (_) => NotificationScreen(token: token, userId: userId),
             );
 
-          case '/main': // 여기 추가
-            return MaterialPageRoute(builder: (_) => const MainTabScreen());
+          case '/main':
+            return MaterialPageRoute(
+              builder: (_) => MainTabScreen(token: token, userId: userId),
+            );
+
           default:
             return MaterialPageRoute(
               builder:

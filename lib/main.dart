@@ -1,3 +1,4 @@
+// ✅ token을 전달하지 않고 FirstPage를 단순 호출하려다 발생한 오류 수정
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'gifticon_state.dart';
@@ -18,10 +19,14 @@ void main() async {
   final NotificationAppLaunchDetails? notificationAppLaunchDetails =
       await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
 
+  // ✅ 실제 token 값 전달
+  const String dummyToken = 'sample_token_123'; // 이후 실제 로그인 시스템 연동 필요
+  const int dummyUserId = 1;
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => GifticonState(),
-      child: const MyApp(),
+      child: MyApp(token: dummyToken, userId: dummyUserId),
     ),
   );
 
@@ -36,17 +41,18 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String token;
+  final int userId;
+
+  const MyApp({super.key, required this.token, required this.userId});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'Navigator Demo',
-      home: const FirstPage(), // 시작 화면 유지
-      routes: {
-        '/message': (context) => const MessagePage(),
-      },
+      home: FirstPage(token: token, userId: userId), // ✅ token 전달
+      routes: {'/message': (context) => const MessagePage()},
     );
   }
 }

@@ -10,6 +10,7 @@ import 'trash_manage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'screens/notification_screen.dart';
 import 'gifticon_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -23,14 +24,13 @@ Widget _buildRoundedBox(
   String imagePath;
   Color boxColor = Colors.grey.shade300;
 
-  // number 값에 따라 이미지 파일 경로를 다르게 설정
   if (number == 1) {
-    imagePath = 'assets/group.png'; // 1번 박스 이미지
+    imagePath = 'assets/group.png';
   } else if (number == 2) {
-    imagePath = 'assets/time.png'; // 2번 박스 이미지
+    imagePath = 'assets/time.png'; 
     boxColor = const Color(0xFF7081F1);
   } else {
-    imagePath = 'assets/brand.png'; // 3번 박스 이미지
+    imagePath = 'assets/brand.png'; 
   }
 
   return GestureDetector(
@@ -39,8 +39,8 @@ Widget _buildRoundedBox(
         context,
         PageRouteBuilder(
           pageBuilder: (_, __, ___) => destinationPage,
-          transitionDuration: Duration.zero, // 전환 시간 0
-          reverseTransitionDuration: Duration.zero, // 되돌아갈 때도 0
+          transitionDuration: Duration.zero, 
+          reverseTransitionDuration: Duration.zero, 
         ),
       );
     },
@@ -55,7 +55,7 @@ Widget _buildRoundedBox(
       child: Center(
         child: Image.asset(
           imagePath,
-          width: 24, // 이미지 크기 조정
+          width: 24, 
           height: 24,
           fit: BoxFit.contain,
         ),
@@ -77,7 +77,6 @@ class _TimeState extends State<Time> {
   @override
   void initState() {
     super.initState();
-    // 테스트용 코드 제거 – 이제 실제 갤러리만 사용
   }
 
 
@@ -102,7 +101,6 @@ class _TimeState extends State<Time> {
   String? normalizeDate(String? raw) {
   if (raw == null) return null;
 
-  // "2026년 05월 16일" → "2026-05-16"
   final match = RegExp(r'(\d{4})[년.\- ]+(\d{1,2})[월.\- ]+(\d{1,2})[일.\- ]*').firstMatch(raw);
   if (match != null) {
     final year = match.group(1);
@@ -111,7 +109,7 @@ class _TimeState extends State<Time> {
     return "$year-$month-$day";
   }
 
-  return raw; // 이미 ISO 형식이면 그대로 반환
+  return raw;
 }
 
 
@@ -265,32 +263,34 @@ class _TimeState extends State<Time> {
           padding: const EdgeInsets.all(8.0),
           child: Image.asset('assets/logo.png', fit: BoxFit.contain),
         ),
-        actions: [
+       actions: [
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: Image.asset('assets/trash.png'),
-                onPressed: () {
+                onPressed: () async {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TrashScreen()),
+                    MaterialPageRoute(builder: (_) => const TrashScreen()),
                   );
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
+                onPressed: () async {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                  );
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/account.png'),
-                onPressed: () {
-                  // 👉 마이페이지로 이동
+                onPressed: () async {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => MyPageScreen()),
+                    MaterialPageRoute(builder: (_) => const MyPageScreen()),
                   );
                 },
               ),

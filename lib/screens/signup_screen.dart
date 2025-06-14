@@ -1,5 +1,7 @@
 // signup_screen.dart - 비밀번호 정규식 이중이스케이프 수정
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -30,6 +32,47 @@ class _SignupScreenState extends State<SignupScreen> {
       _isIdChecked = true;
     });
     _formKey.currentState?.validate();
+  }
+
+  Future<void> signupUser() async {
+    final url = Uri.parse(
+      'http://172.30.129.19:8080/api/users/signup',
+    ); // 예: http://10.0.2.2:8080/api/users/signup
+
+    final body = jsonEncode({
+      "userId": _idController.text.trim(),
+      "password": _pwController.text.trim(),
+      "nickname": _nicknameController.text.trim(),
+      "email": _emailController.text.trim(),
+      "phone": "01012345678", // UI에 없으니 일단 더미로
+      "region": "서울", // UI에 없으니 일단 더미로
+    });
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final resData = jsonDecode(response.body);
+        print('회원가입 성공: ${resData["message"]}');
+        if (!mounted) return;
+        Navigator.pushNamed(context, '/signup_complete');
+      } else {
+        final resData = jsonDecode(response.body);
+        showSnackBar(context, resData["message"] ?? '회원가입에 실패했습니다.');
+      }
+    } catch (e) {
+      showSnackBar(context, '에러 발생: $e');
+    }
+  }
+
+  void showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -177,12 +220,11 @@ class _SignupScreenState extends State<SignupScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/signup_complete');
-                    //ui 통일을 위해 잠시 주석 처리 합니다다
-                    // if (_formKey.currentState!.validate()) {
-                    //   Navigator.pushNamed(context, '/signup_complete');
-                    // }
+                    if (_formKey.currentState!.validate()) {
+                      signupUser(); // ← 우리가 만든 API 호출 함수!
+                    }
                   },
+
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF577BE5),
                     padding: const EdgeInsets.symmetric(vertical: 16),

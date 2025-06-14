@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // 날짜 포맷용
+import 'package:intl/intl.dart';
 import 'group_gallery.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_service.dart';
 import 'trash_item.dart';
 
 class TrashScreen extends StatefulWidget {
-  const TrashScreen({Key? key}) : super(key: key); // ✅ token 제거
+  final String token;
+  final int userId;
+
+  const TrashScreen({required this.token, required this.userId, Key? key})
+    : super(key: key);
 
   @override
   _TrashScreenState createState() => _TrashScreenState();
@@ -18,11 +22,11 @@ class _TrashScreenState extends State<TrashScreen> {
   @override
   void initState() {
     super.initState();
-    trashListFuture = fetchTrashList(); // ✅ token 없이 호출
+    trashListFuture = fetchTrashList(widget.token);
   }
 
   String formatDate(DateTime date) {
-    return DateFormat('yyyy-MM-dd HH:mm').format(date.toLocal());
+    return DateFormat('yyyy.MM.dd').format(date.toLocal());
   }
 
   @override
@@ -36,14 +40,18 @@ class _TrashScreenState extends State<TrashScreen> {
         leading: const BackButton(color: Colors.black),
         title: const Text(
           '휴지통',
-          style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: Colors.black),
             onPressed: () {
               setState(() {
-                trashListFuture = fetchTrashList(); // ✅ 다시 불러오기
+                trashListFuture = fetchTrashList(widget.token);
               });
             },
           ),
@@ -70,14 +78,50 @@ class _TrashScreenState extends State<TrashScreen> {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final item = trashList[index];
-              return ListTile(
-                leading: const Icon(Icons.delete_forever),
-                title: Text('${item.whoUse}가 사용한 기프트콘'),
-                subtitle: Column(
+              final daysUntilDelete =
+                  item.deletedDate.difference(DateTime.now()).inDays;
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 16,
+                ),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('삭제일: ${formatDate(item.deletedDate)}'),
-                    Text('사용일: ${formatDate(item.usedDate)}'),
+                    Text(
+                      '${item.whoUse}님이 친구방에서 사용했습니다.', // 또는 item.location 사용 가능
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF5F5F5),
+                        border: Border.all(color: Colors.black12),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          _buildDateBox(item.usedDate),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [Text(item.gifticonName)],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+                    if (daysUntilDelete >= 0)
+                      Text(
+                        '${daysUntilDelete}일 후 삭제됩니다',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
                   ],
                 ),
               );
@@ -94,15 +138,53 @@ class _TrashScreenState extends State<TrashScreen> {
           if (index == 0) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => GroupGalleryPage(groupName: '콘갤러리')),
+              MaterialPageRoute(
+                builder: (_) => GroupGalleryPage(groupName: '콘갤러리'),
+              ),
             );
           } else if (index == 1) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => FriendListScreen()),
+              MaterialPageRoute(
+                builder:
+                    (_) => FriendListScreen(
+                      token: widget.token,
+                      userId: widget.userId,
+                    ),
+              ),
             );
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildDateBox(DateTime date) {
+    final dateStr = DateFormat('yyyy.MM.dd').format(date);
+    final parts = dateStr.split('.');
+    final year = parts[0];
+    final monthDay = '${parts[1]}.${parts[2]}';
+
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.black),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$monthDay',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            '사용',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+          ),
+        ],
       ),
     );
   }

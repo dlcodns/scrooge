@@ -37,7 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = jsonDecode(response.body);
         final token = data['token'];
 
-        // ⭐ 토큰 저장
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwtToken', token);
 
@@ -66,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white, // ✅ 배경 흰색
+      backgroundColor: Colors.white,
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -92,9 +91,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 16),
 
-            // 그리고 버튼 부분 수정:
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.9, // 화면의 90% 너비
+              width: MediaQuery.of(context).size.width * 0.9,
               height: 55,
               child: ElevatedButton(
                  onPressed: _isLoading ? null : _login,
@@ -112,18 +110,6 @@ class _LoginScreenState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // TextButton(
-                //   onPressed: () {},
-                //   style: TextButton.styleFrom(foregroundColor: Colors.black),
-                //   child: const Text('ID 찾기'),
-                // ),
-                // const Text('|'),
-                // TextButton(
-                //   onPressed: () {},
-                //   style: TextButton.styleFrom(foregroundColor: Colors.black),
-                //   child: const Text('PW 찾기'),
-                // ),
-                // const Text('|'),
                 TextButton(
                   onPressed: () => Navigator.pushNamed(context, '/signup'),
                   style: TextButton.styleFrom(foregroundColor: Colors.black),

@@ -2,7 +2,7 @@ name: scrooge
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -49,7 +49,7 @@ dependencies:
 
   # 이미지 및 사진
   photo_manager: ^3.0.0
-  image_picker: ^1.0.4   # 두 파일 중 더 최신 버전 선택
+  image_picker: ^1.0.4 # 두 파일 중 더 최신 버전 선택
   image_gallery_saver_plus: ^4.0.1
 
   # ML Kit & OCR
@@ -60,6 +60,8 @@ dependencies:
   permission_handler: ^11.0.0
   fluttertoast: ^8.2.12
 
+
+  # 로그인
   jwt_decode: ^0.3.1
 
 dev_dependencies:
@@ -92,7 +94,7 @@ flutter:
   assets:
     - assets/
     - assets/account.png
-    - assets/brand.png 
+    - assets/brand.png
     - assets/conGall.png
     - assets/friendList.png
     - assets/group.png

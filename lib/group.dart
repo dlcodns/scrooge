@@ -6,10 +6,10 @@ import 'brand.dart';
 import 'group_create.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_manage.dart';
+import 'screens/notification_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 Widget _buildRoundedBox(
   BuildContext context,
@@ -123,6 +123,7 @@ class _GroupState extends State<Group> {
 
   @override
   Widget build(BuildContext context) {
+    print("🧩 Group 화면에 전달된 userId: $userId");
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -132,13 +133,13 @@ class _GroupState extends State<Group> {
           padding: const EdgeInsets.all(8.0),
           child: Image.asset('assets/logo.png', fit: BoxFit.contain),
         ),
-        actions: [
+       actions: [
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: Image.asset('assets/trash.png'),
-                onPressed: () {
+                onPressed: () async {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const TrashScreen()),
@@ -147,13 +148,16 @@ class _GroupState extends State<Group> {
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
+                onPressed: () async {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationScreen()),
+                  );
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/account.png'),
-                onPressed: () {
+                onPressed: () async {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const MyPageScreen()),
@@ -173,11 +177,23 @@ class _GroupState extends State<Group> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    _buildRoundedBox(context, const Group(), 1),
+                    _buildRoundedBox(
+                      context,
+                      Group(token: token, userId: userId),
+                      1,
+                    ),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, const Time(), 2),
+                    _buildRoundedBox(
+                      context,
+                      Time(token: token, userId: userId),
+                      2,
+                    ),
                     const SizedBox(width: 8),
-                    _buildRoundedBox(context, const Brand(), 3),
+                    _buildRoundedBox(
+                      context,
+                      Brand(token: token, userId: userId),
+                      3,
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -215,7 +231,6 @@ class _GroupState extends State<Group> {
                         ),
                       );
                     }).toList(),
-
                   ),
                 ),
               ],
@@ -228,7 +243,10 @@ class _GroupState extends State<Group> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const GroupCreateStep1()),
+                  MaterialPageRoute(
+                    builder:
+                        (_) => GroupCreateStep1(token: token, userId: userId),
+                  ),
                 );
               },
               child: Container(
@@ -275,7 +293,10 @@ class _GroupState extends State<Group> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const FriendListScreen()),
+                    MaterialPageRoute(
+                      builder:
+                          (_) => FriendListScreen(token: token, userId: userId),
+                    ),
                   );
                 },
                 child: Center(

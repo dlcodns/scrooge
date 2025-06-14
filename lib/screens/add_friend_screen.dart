@@ -1,7 +1,16 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:scrooge/screens/friend_add_success_screen.dart';
 
 class FriendAddScreen extends StatefulWidget {
-  const FriendAddScreen({super.key});
+  final String token;
+  final int myUserId;
+  const FriendAddScreen({
+    super.key,
+    required this.token,
+    required this.myUserId,
+  });
 
   @override
   State<FriendAddScreen> createState() => _FriendAddScreenState();
@@ -10,26 +19,64 @@ class FriendAddScreen extends StatefulWidget {
 class _FriendAddScreenState extends State<FriendAddScreen> {
   final TextEditingController _controller = TextEditingController();
 
+  Future<void> sendFriendRequest() async {
+    final receiverId = _controller.text.trim();
+    if (receiverId.isEmpty) return;
+
+    final baseUrl = 'http://172.30.129.19:8080';
+
+    // 1. 친구 요청 보내기
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/friends/request'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+      body: jsonEncode({'receiverUserId': receiverId}),
+    );
+
+    if (response.statusCode == 200) {
+      try {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (_) => FriendAddSuccessScreen(
+                  friendName: receiverId,
+                  token: widget.token,
+                  userId: widget.myUserId,
+                ),
+          ),
+        );
+      } catch (e) {
+        print('JSON 파싱 실패: $e');
+        print('원본 응답: ${response.body}');
+      }
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('친구 요청에 실패했습니다')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: const BackButton(color: Colors.black),
-        title: Text(
+        title: const Text(
           '친구 추가',
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-
       body: Stack(
         children: [
           Padding(
@@ -56,18 +103,11 @@ class _FriendAddScreenState extends State<FriendAddScreen> {
               ],
             ),
           ),
-
           Positioned(
             bottom: 24,
             right: 24,
             child: GestureDetector(
-              onTap: () {
-                Navigator.pushReplacementNamed(
-                  context,
-                  '/friend_add_success',
-                  arguments: _controller.text,
-                );
-              },
+              onTap: sendFriendRequest,
               child: const Icon(
                 Icons.arrow_forward,
                 size: 40,
@@ -77,7 +117,6 @@ class _FriendAddScreenState extends State<FriendAddScreen> {
           ),
         ],
       ),
-
     );
   }
 }

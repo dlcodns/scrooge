@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'friend_list_screen.dart';
 
 class MainTabScreen extends StatefulWidget {
-  const MainTabScreen({super.key});
+  final String token;
+  final int userId;
+
+  const MainTabScreen({required this.token, required this.userId, Key? key})
+    : super(key: key);
 
   @override
   State<MainTabScreen> createState() => _MainTabScreenState();
@@ -11,13 +15,13 @@ class MainTabScreen extends StatefulWidget {
 class _MainTabScreenState extends State<MainTabScreen> {
   int _currentIndex = 1;
 
-  final List<Widget> _tabs = [
-    const Center(child: Text("콘갤러리 (미구현)")), // 임시
-    const FriendListScreen(),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final List<Widget> _tabs = [
+      const Center(child: Text("콘갤러리 (미구현)")), // 임시
+      FriendListScreen(token: widget.token, userId: widget.userId),
+    ];
+
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _tabs),
       bottomNavigationBar: BottomNavigationBar(
