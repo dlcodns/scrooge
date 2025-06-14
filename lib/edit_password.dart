@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'new_password.dart';
 
 class EditPasswordScreen extends StatefulWidget {
-  final String token; // ✅ 추가
-  const EditPasswordScreen({required this.token, Key? key}) : super(key: key);
+  const EditPasswordScreen({Key? key}) : super(key: key);
+
   @override
   _EditPasswordScreenState createState() => _EditPasswordScreenState();
 }
@@ -12,6 +13,22 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
   final TextEditingController passwordController = TextEditingController();
   bool obscureText = true;
   bool isPasswordWrong = false;
+  String token = '';
+  int userId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAuthInfo();
+  }
+
+  Future<void> _loadAuthInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      token = prefs.getString('jwtToken') ?? '';
+      userId = prefs.getInt('userId') ?? 0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,19 +42,20 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
         elevation: 0,
         centerTitle: true,
         leading: const BackButton(color: Colors.black),
-        title: Text(
+        title: const Text(
           '비밀번호 변경',
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.black,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
-
       body: Padding(
         padding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.06, vertical: screenHeight * 0.03),
+          horizontal: screenWidth * 0.06,
+          vertical: screenHeight * 0.03,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -49,7 +67,8 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
                 border: OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: Icon(
-                      obscureText ? Icons.visibility_off : Icons.visibility),
+                    obscureText ? Icons.visibility_off : Icons.visibility,
+                  ),
                   onPressed: () {
                     setState(() {
                       obscureText = !obscureText;
@@ -91,33 +110,49 @@ class _EditPasswordScreenState extends State<EditPasswordScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => SetNewPasswordScreen(token:widget.token)),
+                          builder: (context) => const SetNewPasswordScreen(), // ✅ 파라미터 제거
+                        ),
                       );
+
                     }
                   },
-                  child:
-                      Text("변경하기", style: TextStyle(fontSize: screenWidth * 0.045, color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    "변경하기",
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.045,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo[400],
-                    padding:
-                        EdgeInsets.symmetric(vertical: screenHeight * 0.018),
+                    padding: EdgeInsets.symmetric(
+                      vertical: screenHeight * 0.018,
+                    ),
                     minimumSize: Size(double.infinity, 0),
                   ),
                 ),
                 SizedBox(height: screenHeight * 0.015),
                 ElevatedButton(
                   onPressed: () => Navigator.pop(context),
-                  child:
-                      Text("돌아가기", style: TextStyle(fontSize: screenWidth * 0.045, color: Colors.white, fontWeight: FontWeight.bold)),
+                  child: Text(
+                    "돌아가기",
+                    style: TextStyle(
+                      fontSize: screenWidth * 0.045,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.indigo[400],
-                    padding:
-                        EdgeInsets.symmetric(vertical: screenHeight * 0.018),
+                    padding: EdgeInsets.symmetric(
+                      vertical: screenHeight * 0.018,
+                    ),
                     minimumSize: Size(double.infinity, 0),
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

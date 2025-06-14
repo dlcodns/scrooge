@@ -1,28 +1,29 @@
-// ✅ token 전달 반영
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:scrooge/mypage.dart';
 import '../group.dart';
 import '../trash_manage.dart';
 
 class Friend {
+  final int id;
   final String name;
   final String preference;
   final String? second;
   final String? third;
-  bool isFavorite;
 
   Friend({
+    required this.id,
     required this.name,
     required this.preference,
     this.second,
     this.third,
-    this.isFavorite = false,
   });
 }
 
 class FriendListScreen extends StatefulWidget {
-  final String token; // ✅ token 추가
-  const FriendListScreen({required this.token, Key? key}) : super(key: key);
+  const FriendListScreen({Key? key}) : super(key: key);
 
   @override
   State<FriendListScreen> createState() => _FriendListScreenState();
@@ -31,20 +32,39 @@ class FriendListScreen extends StatefulWidget {
 class _FriendListScreenState extends State<FriendListScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<Friend> _allFriends = [];
+  int? myUserId;
 
   @override
   void initState() {
     super.initState();
-    _allFriends = [
-      Friend(name: '박형우', preference: '커피', second: '치킨', third: '떡볶이'),
-      Friend(name: '홍길동', preference: '커피', second: '쿠키', third: '케이크'),
-      Friend(name: '송영은', preference: '올리브영', second: '아이스크림', third: '마카롱'),
-      Friend(name: '박흠흠', preference: '초콜릿'),
-      Friend(name: '박꾀티', preference: '딸기라떼'),
-    ];
-    _searchController.addListener(() {
-      setState(() {});
-    });
+    fetchFriendList();
+  }
+
+  Future<void> fetchFriendList() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+    myUserId = prefs.getInt('userId');
+
+    final response = await http.get(
+      Uri.parse('http://172.30.1.18:8080/api/friends'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> json = jsonDecode(response.body);
+      setState(() {
+        _allFriends = json.map((item) {
+          final prefs = item['preferences'] as List<dynamic>;
+          return Friend(
+            id: item['id'],
+            name: item['nickname'],
+            preference: prefs.isNotEmpty ? prefs[0] : '',
+            second: prefs.length > 1 ? prefs[1] : null,
+            third: prefs.length > 2 ? prefs[2] : null,
+          );
+        }).toList();
+      });
+    }
   }
 
   @override
@@ -54,46 +74,11 @@ class _FriendListScreenState extends State<FriendListScreen> {
   }
 
   void _navigateToProfile(Friend friend) async {
-    final result = await Navigator.pushNamed(
+    Navigator.pushNamed(
       context,
       '/friend_profile',
-      arguments: {
-        'name': friend.name,
-        'first': friend.preference,
-        'second': friend.second ?? '',
-        'third': friend.third ?? '',
-        'isFavorite': friend.isFavorite,
-      },
-    ) as Map<String, dynamic>?;
-
-    if (result != null && result['name'] == friend.name) {
-      final isNowFavorite = result['isFavorite'] ?? false;
-
-      if (!isNowFavorite && friend.isFavorite) {
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('즐겨찾기 삭제'),
-            content: Text('${friend.name}님을 즐겨찾기에서 해제할까요?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('취소'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('확인'),
-              ),
-            ],
-          ),
-        );
-        if (confirm != true) return;
-      }
-
-      setState(() {
-        friend.isFavorite = isNowFavorite;
-      });
-    }
+      arguments: {'userId': friend.id},
+    );
   }
 
   @override
@@ -102,11 +87,10 @@ class _FriendListScreenState extends State<FriendListScreen> {
     final matchingFriends = query.isEmpty
         ? []
         : _allFriends.where((friend) => friend.name.contains(query)).toList();
-    final favoriteFriends = _allFriends.where((f) => f.isFavorite).toList();
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        backgroundColor: Colors.white,
         elevation: 0,
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
@@ -121,14 +105,23 @@ class _FriendListScreenState extends State<FriendListScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TrashScreen(token: widget.token)), // ✅ 전달
+                    MaterialPageRoute(
+                      builder: (_) => TrashScreen(),
+                    ),
                   );
                 },
               ),
               IconButton(
                 icon: Image.asset('assets/heart.png'),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/notifications');
+                onPressed: () async {
+                  final result = await Navigator.pushNamed(
+                    context,
+                    '/notifications',
+                  );
+
+                  if (result == 'refresh') {
+                    fetchFriendList();
+                  }
                 },
               ),
               IconButton(
@@ -136,7 +129,9 @@ class _FriendListScreenState extends State<FriendListScreen> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => MyPageScreen(token: widget.token)), // ✅ 전달
+                    MaterialPageRoute(
+                      builder: (_) => MyPageScreen(),
+                    ),
                   );
                 },
               ),
@@ -144,7 +139,6 @@ class _FriendListScreenState extends State<FriendListScreen> {
           ),
         ],
       ),
-
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -184,41 +178,6 @@ class _FriendListScreenState extends State<FriendListScreen> {
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
                       final friend = matchingFriends[index];
-                      return GestureDetector(
-                        onTap: () => _navigateToProfile(friend),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircleAvatar(
-                              radius: 30,
-                              backgroundColor: Colors.deepPurple.shade100,
-                              child: const Icon(Icons.person, color: Colors.deepPurple),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(friend.name),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-              if (favoriteFriends.isNotEmpty) ...[
-                Container(
-                  width: double.infinity,
-                  color: Colors.grey[200],
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: const Text('즐겨찾기', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                SizedBox(
-                  height: 120,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.all(12),
-                    itemCount: favoriteFriends.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      final friend = favoriteFriends[index];
                       return GestureDetector(
                         onTap: () => _navigateToProfile(friend),
                         child: Column(
@@ -304,7 +263,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => Group(token:widget.token)),
+                    MaterialPageRoute(builder: (_) => Group()),
                   );
                 },
                 child: Center(
@@ -315,7 +274,7 @@ class _FriendListScreenState extends State<FriendListScreen> {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  // 현재 페이지 그대로 유지
+                  // 현재 페이지 유지
                 },
                 child: Center(
                   child: Image.asset('assets/friendList_1.png', height: 20),

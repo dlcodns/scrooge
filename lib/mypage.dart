@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decode/jwt_decode.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'notification.dart';
 import 'profile.dart';
 import 'edit_password.dart';
@@ -33,8 +34,8 @@ class Gifticon {
 }
 
 class MyPageScreen extends StatefulWidget {
-  final String token;
-  const MyPageScreen({required this.token, Key? key}) : super(key: key);
+  const MyPageScreen({Key? key}) : super(key: key);
+
 
   @override
   _MyPageScreenState createState() => _MyPageScreenState();
@@ -47,13 +48,16 @@ class _MyPageScreenState extends State<MyPageScreen> {
   List<String> notificationSummaries = [];
   List<int> notificationIds = [];
   List<Gifticon> myGifticons = [];
+  late String token;
+  late int userId;
+
 
   @override
   void initState() {
     super.initState();
     initializeNotification();
     _loadSavedNotifications();
-    _loadGifticons();
+    _loadTokenAndGifticons();
   }
 
   Future<void> _loadSavedNotifications() async {
@@ -69,11 +73,22 @@ class _MyPageScreenState extends State<MyPageScreen> {
     await saveNotifications(notificationSummaries, notificationIds);
   }
 
-  Future<void> _loadGifticons() async {
+  Future<void> _loadTokenAndGifticons() async {
+    final prefs = await SharedPreferences.getInstance();
+  token = prefs.getString('jwtToken') ?? '';
+  userId = prefs.getInt('userId') ?? -1;
+
+
+    if (token == null || userId == null) {
+      // 로그인 상태 아님 처리
+      return;
+    }
+
+    // 이후 기존 함수 호출
     try {
-      Map<String, dynamic> payload = Jwt.parseJwt(widget.token);
+      Map<String, dynamic> payload = Jwt.parseJwt(token);
       String myUserId = payload['sub'];
-      final gifticons = await fetchMyGifticons(widget.token, myUserId);
+      final gifticons = await fetchMyGifticons(token, myUserId);
       setState(() {
         myGifticons = gifticons;
       });
@@ -133,7 +148,8 @@ class _MyPageScreenState extends State<MyPageScreen> {
   Future<String> getLocalServerBaseUrl() async {
     for (var interface in await NetworkInterface.list()) {
       for (var addr in interface.addresses) {
-        if (addr.type == InternetAddressType.IPv4 && addr.address.startsWith("172.")) {
+        if (addr.type == InternetAddressType.IPv4 &&
+            addr.address.startsWith("172.")) {
           final segments = addr.address.split('.');
           if (segments.length == 4) {
             return "http://${segments[0]}.${segments[1]}.${segments[2]}.1:8080";
@@ -142,6 +158,35 @@ class _MyPageScreenState extends State<MyPageScreen> {
       }
     }
     return "http://10.0.2.2:8080";
+  }
+
+  Future<void> testServerConnection() async {
+    try {
+      final baseUrl = await getLocalServerBaseUrl();
+      final res = await http.get(
+        Uri.parse('$baseUrl/api/mypage/trash/me'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      if (res.statusCode == 200) {
+        print("✅ 서버 응답 성공: ${res.body}");
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("서버 연결 성공 ✅")));
+      } else {
+        print("❌ 서버 오류: ${res.statusCode}, ${res.body}");
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("서버 오류: ${res.statusCode}")));
+      }
+    } catch (e) {
+      print("❌ 네트워크 오류: $e");
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("네트워크 연결 실패 ❌")));
+    }
   }
 
   @override
@@ -155,7 +200,11 @@ class _MyPageScreenState extends State<MyPageScreen> {
         leading: const BackButton(color: Colors.black),
         title: const Text(
           '마이페이지',
-          style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -164,25 +213,41 @@ class _MyPageScreenState extends State<MyPageScreen> {
           children: [
             ListTile(
               leading: Icon(Icons.person, color: Colors.black),
-              title: Text("내 프로필 정보", style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                "내 프로필 정보",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               trailing: TextButton(
                 onPressed: () {},
-                child: Text("로그아웃", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: Text(
+                  "로그아웃",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
                 style: TextButton.styleFrom(
                   backgroundColor: Colors.grey[300],
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfileDetailScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => ProfileDetailScreen(),
+                  ),
                 );
               },
             ),
             ListTile(
               leading: Icon(Icons.notifications, color: Colors.black),
-              title: Text("유효기간 만료 알림 설정", style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                "유효기간 만료 알림 설정",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               subtitle: Text("설정된 알림 수: ${notificationSummaries.length}/3"),
               onTap: () {
                 setState(() {
@@ -192,7 +257,10 @@ class _MyPageScreenState extends State<MyPageScreen> {
             ),
             if (showNotificationSetting)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 12,
+                ),
                 child: Column(
                   children: [
                     Container(
@@ -202,7 +270,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: CupertinoPicker(
-                        scrollController: FixedExtentScrollController(initialItem: days.indexOf(selectedDay)),
+                        scrollController: FixedExtentScrollController(
+                          initialItem: days.indexOf(selectedDay),
+                        ),
                         itemExtent: 32,
                         magnification: 1.2,
                         useMagnifier: true,
@@ -211,9 +281,17 @@ class _MyPageScreenState extends State<MyPageScreen> {
                             selectedDay = days[index];
                           });
                         },
-                        children: days
-                            .map((d) => Center(child: Text("$d일 전", style: GoogleFonts.jua(fontSize: 18))))
-                            .toList(),
+                        children:
+                            days
+                                .map(
+                                  (d) => Center(
+                                    child: Text(
+                                      "$d일 전",
+                                      style: GoogleFonts.jua(fontSize: 18),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
                       ),
                     ),
                     SizedBox(height: 12),
@@ -221,15 +299,27 @@ class _MyPageScreenState extends State<MyPageScreen> {
                       onPressed: () async {
                         String summary = "$selectedDay일 전 오전 9시";
                         if (notificationSummaries.length >= 3) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("최대 3개의 알림만 설정할 수 있습니다.")));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("최대 3개의 알림만 설정할 수 있습니다.")),
+                          );
                           return;
                         }
                         if (notificationSummaries.contains(summary)) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("이미 동일 날짜의 알림이 존재합니다.")));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("이미 동일 날짜의 알림이 존재합니다.")),
+                          );
                           return;
                         }
                         await scheduleAllExpiryNotifications(
-                          items: myGifticons.map((g) => Item(name: g.name, expiryDate: g.dueDate)).toList(),
+                          items:
+                              myGifticons
+                                  .map(
+                                    (g) => Item(
+                                      name: g.name,
+                                      expiryDate: g.dueDate,
+                                    ),
+                                  )
+                                  .toList(),
                           selectedDay: selectedDay,
                           onNotificationScheduled: (id) {
                             notificationIds.add(id);
@@ -239,22 +329,39 @@ class _MyPageScreenState extends State<MyPageScreen> {
                           notificationSummaries.add(summary);
                         });
                         await saveAll();
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("기프트콘 유효기간 알림이 설정되었습니다.")));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("기프트콘 유효기간 알림이 설정되었습니다.")),
+                        );
                       },
-                      child: Text("전체 알림 설정", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, minimumSize: Size(double.infinity, 40)),
-                    )
+                      child: Text(
+                        "전체 알림 설정",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        minimumSize: Size(double.infinity, 40),
+                      ),
+                    ),
                   ],
                 ),
               ),
             ListTile(
               leading: Icon(Icons.lock, color: Colors.black),
-              title: Text("비밀번호 변경", style: TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                "비밀번호 변경",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => EditPasswordScreen(token: widget.token)),
+                  MaterialPageRoute(
+                    builder: (context) => const EditPasswordScreen(), // 전달 안 함
+                  ),
                 );
+
               },
             ),
             ListTile(
@@ -263,18 +370,30 @@ class _MyPageScreenState extends State<MyPageScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => TrashScreen(token: widget.token)),
+                  MaterialPageRoute(
+                    builder: (context) => const TrashScreen(), // 전달 안 함
+                  ),
                 );
+
               },
             ),
             if (notificationSummaries.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Divider(thickness: 1.5, color: Colors.black),
-                    Text("설정된 알림 목록 (${notificationSummaries.length}/3)", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    Text(
+                      "설정된 알림 목록 (${notificationSummaries.length}/3)",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                     ListView.builder(
                       shrinkWrap: true,
                       physics: NeverScrollableScrollPhysics(),
@@ -297,7 +416,9 @@ class _MyPageScreenState extends State<MyPageScreen> {
                               notificationIds.removeAt(index);
                             });
                             await saveAll();
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("알림이 삭제되었습니다.")));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("알림이 삭제되었습니다.")),
+                            );
                           },
                           child: ListTile(
                             leading: Icon(Icons.alarm, color: Colors.indigo),

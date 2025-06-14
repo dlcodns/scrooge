@@ -12,8 +12,7 @@ import 'signup_in_screen.dart';
 import 'screens/friend_list_screen.dart';
 
 class FirstPage extends StatelessWidget {
-  final String token; 
-  const FirstPage({required this.token, Key? key}) : super(key: key);
+  const FirstPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -46,42 +45,45 @@ class FirstPage extends StatelessWidget {
             );
 
           case '/preference':
-            final args = settings.arguments as Map<String, dynamic>;
-            final nickname = args['nickname'] as String? ?? '사용자';
-            final token = args['token'] as String;
-            return MaterialPageRoute(
-              builder: (_) => PreferenceScreen(nickname: nickname, token: token),
-            );
+            final args = settings.arguments;
+            if (args is Map<String, dynamic>) {
+              final nickname = args['nickname'] as String? ?? '사용자';
+              return MaterialPageRoute(
+                builder: (_) => PreferenceScreen(),
+              );
+            }
 
           case '/friend_list':
-            return MaterialPageRoute(builder: (_) => FriendListScreen(token: token));
+            return MaterialPageRoute(
+              builder: (_) => const FriendListScreen(),
+            );
 
           case '/friend_add_success':
-            final name = settings.arguments as String;
+            final args = settings.arguments as Map<String, dynamic>;
+            final name = args['friendName'] as String;
             return MaterialPageRoute(
               builder: (_) => FriendAddSuccessScreen(friendName: name),
             );
 
           case '/friend_add':
-            return MaterialPageRoute(builder: (_) => const FriendAddScreen());
+            return MaterialPageRoute(
+              builder: (_) => const FriendAddScreen(),
+            );
 
           case '/friend_profile':
-            final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
-              builder: (_) => FriendProfileScreen(
-                name: args['name'],
-                firstPreference: args['first'],
-                secondPreference: args['second'],
-                thirdPreference: args['third'],
-                isFavorite: args['isFavorite'],
-              ),
+              builder: (_) => const FriendProfileScreen(),
             );
 
           case '/notifications':
-            return MaterialPageRoute(builder: (_) => const NotificationScreen());
+            return MaterialPageRoute(
+              builder: (_) => const NotificationScreen(),
+            );
 
           case '/main':
-            return MaterialPageRoute(builder: (_) => MainTabScreen(token: token));
+            return MaterialPageRoute(
+              builder: (_) => const MainTabScreen(),
+            );
 
           default:
             return MaterialPageRoute(
