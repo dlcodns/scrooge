@@ -36,7 +36,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Future<void> fetchNotifications() async {
     final response = await http.get(
-      Uri.parse('http://192.168.26.252:8080/api/notifications/$userId'),
+      Uri.parse('http://172.30.1.54:8080/api/notifications/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
     print("🧪 요청하려는 receiverId: $userId");
@@ -65,7 +65,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         action == 'accept' ? '/api/friends/accept' : '/api/friends/reject';
 
     final response = await http.post(
-      Uri.parse('http://192.168.26.252:8080$url'),
+      Uri.parse('http://172.30.1.54:8080$url'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',

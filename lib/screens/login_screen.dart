@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:scrooge/group.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'preference_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,10 +20,10 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     setState(() => _isLoading = true);
 
-    final loginId = _idController.text.trim(); // <- loginId
+    final loginId = _idController.text.trim();
     final password = _pwController.text.trim();
 
-    final url = Uri.parse('http://192.168.26.252:8080/api/users/login');
+    final url = Uri.parse('http://172.30.1.54:8080/api/users/login');
 
     try {
       final response = await http.post(
@@ -45,9 +45,11 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('loginId', loginId);
 
         if (!mounted) return;
+
+        // ✅ 로그인 성공 후 PreferenceScreen으로 이동
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Group()),
+          MaterialPageRoute(builder: (context) => const PreferenceScreen()),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -65,7 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -95,12 +96,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
             SizedBox(
               width: MediaQuery.of(context).size.width * 0.9,
               height: 55,
               child: ElevatedButton(
-                 onPressed: _isLoading ? null : _login,
+                onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF577BE5),
                   shape: const RoundedRectangleBorder(

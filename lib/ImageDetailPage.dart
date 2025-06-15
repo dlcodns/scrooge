@@ -50,7 +50,7 @@ class ImageDetailPage extends StatelessWidget {
   });
 
   Future<void> markAsUsed(BuildContext context) async {
-    final url = Uri.parse("http://192.168.0.17:8080/api/mypage/trash");
+    final url = Uri.parse("http://172.30.1.54:8080/api/mypage/trash");
 
     try {
       final response = await http.post(

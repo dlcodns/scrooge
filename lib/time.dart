@@ -145,7 +145,7 @@ class _TimeState extends State<Time> {
       return;
     }
 
-    final url = Uri.parse('http://192.168.26.252:8080/api/gifticon');
+    final url = Uri.parse('http://172.30.1.54:8080/api/gifticon');
     final response = await http.post(
       url,
       headers: {

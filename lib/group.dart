@@ -84,7 +84,7 @@ class _GroupState extends State<Group> {
     final token = prefs.getString('jwtToken');
 
     final response = await http.get(
-      Uri.parse('http://192.168.26.252:8080/api/group/my-rooms'),
+      Uri.parse('http://172.30.1.54:8080/api/group/my-rooms'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
