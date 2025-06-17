@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'group_gallery.dart';
+import 'group.dart';
 import 'screens/friend_list_screen.dart';
 import 'trash_service.dart';
 import 'trash_item.dart';
@@ -129,31 +129,46 @@ class _TrashScreenState extends State<TrashScreen> {
           );
         },
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.photo_album), label: '콘갤러리'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: '친구 목록'),
-        ],
-        onTap: (index) async {
-          if (index == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => GroupGalleryPage(groupName: '콘갤러리'),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        height: 60,
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  // TODO: conGall 동작
+                },
+                child: Center(
+                  child: Image.asset('assets/conGall.png', height: 20),
+                ),
               ),
-            );
-          } else if (index == 1) {
-            final prefs = await SharedPreferences.getInstance();
-            final token = prefs.getString('jwtToken') ?? '';
-            final userId = prefs.getInt('userId') ?? 0;
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => FriendListScreen(),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  // ✅ 여기서 친구목록으로 이동!
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => FriendListScreen()),
+                  );
+                },
+                child: Center(
+                  child: Image.asset('assets/friendList.png', height: 20),
+                ),
               ),
-            );
-          }
-        },
+            ),
+          ],
+        ),
       ),
     );
   }
