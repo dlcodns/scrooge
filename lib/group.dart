@@ -195,7 +195,7 @@ class _GroupState extends State<Group> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => GroupGalleryPage(groupName: group["name"]), // 필요시 groupId도 넘겨줘
+                              builder: (_) => GroupGalleryPage(groupId: group["id"]), // 필요시 groupId도 넘겨줘
                             ),
                           );
                         },

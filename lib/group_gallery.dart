@@ -1,50 +1,140 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ImageDetailPage.dart';
 import 'gifticon_select_page.dart';
 
 class GroupGalleryPage extends StatefulWidget {
-  final String groupName;
+  final int groupId;
 
-  const GroupGalleryPage({super.key, required this.groupName});
+  const GroupGalleryPage({super.key, required this.groupId});
 
   @override
   State<GroupGalleryPage> createState() => _GroupGalleryPageState();
 }
 
+class GroupGifticon {
+  final String gifticonId;
+  final String title;
+  final String imageUrl;
+  final DateTime expiredAt;
+
+  GroupGifticon({
+    required this.gifticonId,
+    required this.title,
+    required this.imageUrl,
+    required this.expiredAt,
+  });
+
+  factory GroupGifticon.fromJson(Map<String, dynamic> json) {
+    return GroupGifticon(
+      gifticonId: json['gifticonId'],
+      title: json['title'],
+      imageUrl: json['imageUrl'],
+      expiredAt: DateTime.parse(json['expiredAt']),
+    );
+  }
+}
+
 class _GroupGalleryPageState extends State<GroupGalleryPage> {
   bool isGridView = true;
   bool showDrawer = false;
+  String? groupName;
 
-  final Map<String, List<Map<String, String>>> groupedCoupons = {
-    "1월 31일 만료": [
-      {"title": "복숭아 케이크", "image": "assets/twosome.png"},
-    ],
-    "2월 2일 만료": [
-      {"title": "스타벅스 프라푸치노", "image": "assets/starbucks.png"},
-      {"title": "GS25 5천원권", "image": "assets/GS25.png"},
-    ],
-    "3월 만료": [
-      {"title": "맥카페 아이스커피", "image": "assets/mcdonalds.png"},
-    ]
-  };
+  List<GroupGifticon> _gifticons = [];
+  Map<String, List<GroupGifticon>> _groupedGifticons = {};
 
   final List<String> members = ["박형우", "송영은"];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadGroupName();
+    _fetchGifticons();
+  }
+
+  Future<void> _loadGroupName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+
+    final url = Uri.parse('http://172.30.1.54:8080/api/group/${widget.groupId}/name');
+    final response = await http.get(url, headers: {
+      'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode == 200) {
+      setState(() {
+        groupName = json.decode(response.body)['groupName'];
+      });
+    } else {
+      print('그룹 이름 로드 실패: \${response.body}');
+    }
+  }
+
+  void _groupGifticonsByDate(List<GroupGifticon> gifticons) {
+    Map<String, List<GroupGifticon>> grouped = {};
+
+    for (var gifticon in gifticons) {
+      final key = "\${gifticon.expiredAt.month}월 \${gifticon.expiredAt.day}일 만료";
+      if (!grouped.containsKey(key)) {
+        grouped[key] = [];
+      }
+      grouped[key]!.add(gifticon);
+    }
+
+    final sortedKeys = grouped.keys.toList()
+      ..sort((a, b) {
+        final dateA = DateTime.parse("2025-" + a.replaceAll("월 ", "-").replaceAll("일 만료", ""));
+        final dateB = DateTime.parse("2025-" + b.replaceAll("월 ", "-").replaceAll("일 만료", ""));
+        return dateA.compareTo(dateB);
+      });
+
+    setState(() {
+      _groupedGifticons = {
+        for (var key in sortedKeys) key: grouped[key]!
+      };
+    });
+  }
+
+  Future<void> _fetchGifticons() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+
+    final url = Uri.parse('http://172.30.1.54:8080/api/group/${widget.groupId}/group_gifticons');
+    final response = await http.get(url, headers: {
+      'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = json.decode(response.body);
+      final gifticons = jsonList.map((json) => GroupGifticon.fromJson(json)).toList();
+
+      setState(() {
+        _gifticons = gifticons;
+      });
+
+      _groupGifticonsByDate(gifticons); // ✅ 꼭 호출!
+    } else {
+      print('❌ Error loading gifticons: ${response.body}');
+    }
+  }
+
+
+
   void _openGifticonSelectPage() async {
-    // groupName → groupId로 변경이 필요합니다.
-    // 임시로 예시 숫자 1을 넣어둠 (실제 그룹 ID 전달하도록 수정해야 함)
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => GifticonSelectPage(groupId: 1), // 여기에 진짜 groupId 넘기기
+        builder: (_) => GifticonSelectPage(groupId: widget.groupId),
       ),
     );
 
     if (result == true) {
-      // 기프티콘 등록 성공 후 처리 (예: 다시 불러오기 등)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('기프티콘이 등록되었습니다.')),
       );
+      _fetchGifticons();
     }
   }
 
@@ -52,14 +142,13 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: const BackButton(color: Colors.black),
         title: Text(
-          widget.groupName,
+          groupName ?? " ",
           style: const TextStyle(
             color: Colors.black,
             fontSize: 20,
@@ -77,7 +166,6 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
           ),
         ],
       ),
-      
       body: Stack(
         children: [
           ListView(
@@ -85,7 +173,7 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
             children: [
               _buildViewToggleButtons(),
               const SizedBox(height: 16),
-              ...groupedCoupons.entries.map((entry) {
+              ..._groupedGifticons.entries.map((entry) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -95,10 +183,10 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
                         ? Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: entry.value.map((item) => _buildMaxWidthSquareImage(item)).toList(),
+                            children: entry.value.map((item) => _buildGifticonGridItem(item)).toList(),
                           )
                         : Column(
-                            children: entry.value.map((item) => _buildCouponListTile(item)).toList(),
+                            children: entry.value.map((item) => _buildGifticonListItem(item)).toList(),
                           ),
                     const SizedBox(height: 20),
                   ],
@@ -152,16 +240,16 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
     );
   }
 
-  Widget _buildMaxWidthSquareImage(Map<String, String> item) {
+  Widget _buildGifticonGridItem(GroupGifticon item) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => ImageDetailPage(
-              imagePath: item["image"] ?? "",
-              groupName: widget.groupName,
-              gifticonId: item["gifticonId"] ?? "",
+              imagePath: item.imageUrl,
+              groupName: groupName ?? '',
+              gifticonId: item.gifticonId,
             ),
           ),
         );
@@ -172,26 +260,23 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
           aspectRatio: 1,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              item["image"] ?? "",
-              fit: BoxFit.cover,
-            ),
+            child: Image.network(item.imageUrl, fit: BoxFit.cover),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCouponListTile(Map<String, String> item) {
+  Widget _buildGifticonListItem(GroupGifticon item) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => ImageDetailPage(
-              imagePath: item["image"] ?? "",
-              groupName: widget.groupName,
-              gifticonId: item["gifticonId"] ?? "",
+              imagePath: item.imageUrl,
+              groupName: groupName ?? '',
+              gifticonId: item.gifticonId,
             ),
           ),
         );
@@ -202,20 +287,10 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                item["image"] ?? "",
-                width: 72,
-                height: 72,
-                fit: BoxFit.cover,
-              ),
+              child: Image.network(item.imageUrl, width: 72, height: 72, fit: BoxFit.cover),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item["title"] ?? "", style: const TextStyle(fontSize: 14)),
-              ],
-            )
+            Text(item.title, style: const TextStyle(fontSize: 14)),
           ],
         ),
       ),
@@ -266,51 +341,4 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
       ],
     );
   }
-}
-
-Widget _buildRoundedBox(
-  BuildContext context,
-  Widget destinationPage,
-  int number,
-) {
-  String imagePath;
-  Color boxColor = Colors.grey.shade300;
-
-  if (number == 1) {
-    imagePath = 'assets/group.png';
-    boxColor = const Color(0xFF7081F1);
-  } else if (number == 2) {
-    imagePath = 'assets/time.png';
-  } else {
-    imagePath = 'assets/brand.png';
-  }
-
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => destinationPage,
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ),
-      );
-    },
-    child: Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: boxColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Center(
-        child: Image.asset(
-          imagePath,
-          width: 24,
-          height: 24,
-          fit: BoxFit.contain,
-        ),
-      ),
-    ),
-  );
 }
