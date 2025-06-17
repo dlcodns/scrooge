@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:jwt_decode/jwt_decode.dart';
 
+import 'signup_in_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'notification.dart';
 import 'profile.dart';
@@ -218,7 +219,14 @@ class _MyPageScreenState extends State<MyPageScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               trailing: TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const SignupInScreen()
+                    )
+                    );
+                    },
                 child: Text(
                   "로그아웃",
                   style: TextStyle(

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'ImageDetailPage.dart';
 
 class BrandGalleryPage extends StatefulWidget {
@@ -10,21 +13,136 @@ class BrandGalleryPage extends StatefulWidget {
   State<BrandGalleryPage> createState() => _BrandGalleryPageState();
 }
 
+const String baseUrl = 'http://172.30.1.54:8080';
+
+class BrandGifticon {
+  final String gifticonId;
+  final String title;
+  final String imageUrl;
+  final DateTime expiredAt;
+
+  BrandGifticon({
+    required this.gifticonId,
+    required this.title,
+    required this.imageUrl,
+    required this.expiredAt,
+  });
+
+  factory BrandGifticon.fromJson(Map<String, dynamic> json) {
+    final rawImageUrl = json['imageUrl'];
+    final fullImageUrl = rawImageUrl.startsWith('http')
+        ? rawImageUrl
+        : '$baseUrl$rawImageUrl';
+
+    return BrandGifticon(
+      gifticonId: json['gifticonNumber'] ?? '',
+      title: json['brand'] ?? '제목 없음',
+      imageUrl: fullImageUrl,
+      expiredAt: DateTime.parse(json['dueDate']),
+    );
+  }
+
+}
+
 class _BrandGalleryPageState extends State<BrandGalleryPage> {
   bool isGridView = true;
+  List<BrandGifticon> _gifticons = [];
+  Map<String, List<BrandGifticon>> _groupedGifticons = {};
 
-  final Map<String, List<Map<String, String>>> brandedCoupons = {
-    "1월 31일 만료": [
-      {"title": "복숭아 케이크", "image": "assets/twosome.png"},
-    ],
-    "2월 2일 만료": [
-      {"title": "스타벅스 프라푸치노", "image": "assets/starbucks.png"},
-      {"title": "GS25 5천원권", "image": "assets/GS25.png"},
-    ],
-    "3월 만료": [
-      {"title": "맥카페 아이스커피", "image": "assets/mcdonalds.png"},
-    ]
-  };
+  @override
+  void initState() {
+    super.initState();
+    _fetchGifticonsByBrand();
+  }
+
+  Future<void> _fetchGifticonsByBrand() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+    final galleryUrl = Uri.parse('$baseUrl/api/gifticon/brand-gallery');
+
+    try {
+      final brandRes = await http.get(galleryUrl, headers: {
+        'Authorization': 'Bearer $token',
+      });
+
+      if (brandRes.statusCode != 200) {
+        print('📦 JWT 토큰: $token');
+        print('❌ 브랜드 정보 불러오기 실패: ${brandRes.body}');
+        return;
+      }
+
+      final jsonData = json.decode(brandRes.body);
+      final List<dynamic> brands = jsonData['brands'];
+
+      final targetBrand = brands.firstWhere(
+        (b) => b['brand'] == widget.brandName,
+        orElse: () => null,
+      );
+
+      if (targetBrand == null) {
+        print('❌ 해당 브랜드 없음');
+        return;
+      }
+
+      final List<String> gifticonNumbers = List<String>.from(targetBrand['gifticonNumbers'] ?? []);
+
+      // 병렬 요청으로 상세 정보 가져오기
+      final futures = gifticonNumbers.map((number) async {
+        final detailUrl = Uri.parse('$baseUrl/api/gifticon/$number');
+        final res = await http.get(detailUrl, headers: {
+          'Authorization': 'Bearer $token',
+        });
+
+        if (res.statusCode == 200) {
+          final data = json.decode(res.body);
+          return BrandGifticon.fromJson(data);
+        } else {
+          print('⚠️ 실패: $number → ${res.statusCode}');
+          return null;
+        }
+      }).toList();
+
+      final results = await Future.wait(futures);
+      final filteredGifticons = results.whereType<BrandGifticon>().toList();
+
+      setState(() {
+        _gifticons = filteredGifticons;
+      });
+      _groupGifticonsByDate(filteredGifticons);
+    } catch (e) {
+      print('❌ 예외 발생: $e');
+    }
+  }
+
+
+
+  void _groupGifticonsByDate(List<BrandGifticon> gifticons) {
+    Map<String, List<BrandGifticon>> grouped = {};
+
+    for (var gifticon in gifticons) {
+      final date = gifticon.expiredAt;
+      final key = "${date.year}년 ${date.month}월 만료";
+
+      grouped.putIfAbsent(key, () => []).add(gifticon);
+    }
+
+    final sortedKeys = grouped.keys.toList()
+      ..sort((a, b) {
+        final aParts = RegExp(r'(\d{4})년 (\d{1,2})월').firstMatch(a)!;
+        final bParts = RegExp(r'(\d{4})년 (\d{1,2})월').firstMatch(b)!;
+
+        final aDate = DateTime(int.parse(aParts[1]!), int.parse(aParts[2]!));
+        final bDate = DateTime(int.parse(bParts[1]!), int.parse(bParts[2]!));
+
+        return aDate.compareTo(bDate);
+      });
+
+    setState(() {
+      _groupedGifticons = {
+        for (var key in sortedKeys) key: grouped[key]!
+      };
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,32 +151,23 @@ class _BrandGalleryPageState extends State<BrandGalleryPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true, // 중앙 정렬
-        leading: const BackButton(color: Colors.black), // 왼쪽 고정
-        title: Center(
-          child: Text(
-            widget.brandName,
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+        centerTitle: true,
+        leading: const BackButton(color: Colors.black),
+        title: Text(
+          widget.brandName,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
       ),
-
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
           _buildViewToggleButtons(),
           const SizedBox(height: 16),
-          ...brandedCoupons.entries.map((entry) {
+          ..._groupedGifticons.entries.map((entry) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -68,10 +177,10 @@ class _BrandGalleryPageState extends State<BrandGalleryPage> {
                     ? Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: entry.value.map((item) => _buildMaxWidthSquareImage(item)).toList(),
+                        children: entry.value.map((item) => _buildGifticonGridItem(item)).toList(),
                       )
                     : Column(
-                        children: entry.value.map((item) => _buildCouponListTile(item)).toList(),
+                        children: entry.value.map((item) => _buildGifticonListItem(item)).toList(),
                       ),
                 const SizedBox(height: 20),
               ],
@@ -82,16 +191,16 @@ class _BrandGalleryPageState extends State<BrandGalleryPage> {
     );
   }
 
-  Widget _buildMaxWidthSquareImage(Map<String, String> item) {
+  Widget _buildGifticonGridItem(BrandGifticon item) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => ImageDetailPage(
-              imagePath: item["image"] ?? "",
+              imagePath: item.imageUrl,
               groupName: widget.brandName,
-              gifticonId: item["gifticonId"] ?? "",
+              gifticonId: item.gifticonId,
             ),
           ),
         );
@@ -102,26 +211,23 @@ class _BrandGalleryPageState extends State<BrandGalleryPage> {
           aspectRatio: 1,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              item["image"] ?? "",
-              fit: BoxFit.cover,
-            ),
+            child: Image.network(item.imageUrl, fit: BoxFit.cover),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildCouponListTile(Map<String, String> item) {
+  Widget _buildGifticonListItem(BrandGifticon item) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => ImageDetailPage(
-              imagePath: item["image"] ?? "",
+              imagePath: item.imageUrl,
               groupName: widget.brandName,
-              gifticonId: item["gifticonId"] ?? "",
+              gifticonId: item.gifticonId,
             ),
           ),
         );
@@ -132,20 +238,10 @@ class _BrandGalleryPageState extends State<BrandGalleryPage> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                item["image"] ?? "",
-                width: 72,
-                height: 72,
-                fit: BoxFit.cover,
-              ),
+              child: Image.network(item.imageUrl, width: 72, height: 72, fit: BoxFit.cover),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(item["title"] ?? "", style: const TextStyle(fontSize: 14)),
-              ],
-            )
+            Text(item.title, style: const TextStyle(fontSize: 14)),
           ],
         ),
       ),
@@ -196,51 +292,4 @@ class _BrandGalleryPageState extends State<BrandGalleryPage> {
       ],
     );
   }
-}
-
-Widget _buildRoundedBox(
-  BuildContext context,
-  Widget destinationPage,
-  int number,
-) {
-  String imagePath;
-  Color boxColor = Colors.grey.shade300;
-
-  if (number == 1) {
-    imagePath = 'assets/group.png';
-    boxColor = const Color(0xFF7081F1);
-  } else if (number == 2) {
-    imagePath = 'assets/time.png';
-  } else {
-    imagePath = 'assets/brand.png';
-  }
-
-  return GestureDetector(
-    onTap: () {
-      Navigator.push(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => destinationPage,
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ),
-      );
-    },
-    child: Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        color: boxColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Center(
-        child: Image.asset(
-          imagePath,
-          width: 24,
-          height: 24,
-          fit: BoxFit.contain,
-        ),
-      ),
-    ),
-  );
 }

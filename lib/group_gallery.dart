@@ -108,14 +108,22 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
     Map<String, List<GroupGifticon>> grouped = {};
 
     for (var gifticon in gifticons) {
-      final key = "${gifticon.expiredAt.year}-${gifticon.expiredAt.month.toString().padLeft(2, '0')}-${gifticon.expiredAt.day.toString().padLeft(2, '0')} 만료";
-      if (!grouped.containsKey(key)) {
-        grouped[key] = [];
-      }
-      grouped[key]!.add(gifticon);
+      final date = gifticon.expiredAt;
+      final key = "${date.year}년 ${date.month}월 만료";
+
+      grouped.putIfAbsent(key, () => []).add(gifticon);
     }
 
-    final sortedKeys = grouped.keys.toList()..sort(); // 날짜 순 정렬
+    final sortedKeys = grouped.keys.toList()
+      ..sort((a, b) {
+        final aParts = RegExp(r'(\d{4})년 (\d{1,2})월').firstMatch(a)!;
+        final bParts = RegExp(r'(\d{4})년 (\d{1,2})월').firstMatch(b)!;
+
+        final aDate = DateTime(int.parse(aParts[1]!), int.parse(aParts[2]!));
+        final bDate = DateTime(int.parse(bParts[1]!), int.parse(bParts[2]!));
+
+        return aDate.compareTo(bDate);
+      });
 
     setState(() {
       _groupedGifticons = {
@@ -123,6 +131,7 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
       };
     });
   }
+
   
 
 

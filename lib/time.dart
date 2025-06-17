@@ -71,14 +71,38 @@ class Time extends StatefulWidget {
   State<Time> createState() => _TimeState();
 }
 
+List<String> serverImageUrls = [];
+
 class _TimeState extends State<Time> {
   List<String> gifticonSummaries = [];
 
   @override
   void initState() {
     super.initState();
+    _fetchMyGifticons();
   }
 
+  Future<void> _fetchMyGifticons() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken');
+
+    if (token == null) return;
+
+    final response = await http.get(
+      Uri.parse('http://172.30.1.54:8080/api/group/my-gifticons'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      setState(() {
+        serverImageUrls = data.map((e) {
+          final url = e['imageUrl'];
+          return url.startsWith('http') ? url : 'http://172.30.1.54:8080$url';
+        }).cast<String>().toList();
+      });
+    }
+  }
 
 
   final List<String> keywords = [
@@ -303,87 +327,109 @@ class _TimeState extends State<Time> {
                 ),
                 const SizedBox(height: 16),
 
-                // ✅ OCR 결과 요약 텍스트 출력
-                if (gifticonSummaries.isNotEmpty)
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      border: Border.all(color: Colors.black12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: gifticonSummaries.map((summary) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(
-                          summary,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      )).toList(),
-                    ),
-                  ),
+                // // ✅ OCR 결과 요약 텍스트 출력
+                // if (gifticonSummaries.isNotEmpty)
+                //   Container(
+                //     width: double.infinity,
+                //     margin: const EdgeInsets.only(bottom: 8),
+                //     padding: const EdgeInsets.all(12),
+                //     decoration: BoxDecoration(
+                //       color: Colors.grey.shade100,
+                //       border: Border.all(color: Colors.black12),
+                //       borderRadius: BorderRadius.circular(8),
+                //     ),
+                //     child: Column(
+                //       crossAxisAlignment: CrossAxisAlignment.start,
+                //       children: gifticonSummaries.map((summary) => Padding(
+                //         padding: const EdgeInsets.symmetric(vertical: 4),
+                //         child: Text(
+                //           summary,
+                //           style: const TextStyle(
+                //             fontSize: 13,
+                //             color: Colors.black87,
+                //           ),
+                //         ),
+                //       )).toList(),
+                //     ),
+                //   ),
 
-                // 기프티콘 이미지 그리드
                 Expanded(
-                  child: gifticonImages.isEmpty
+                  child: gifticonImages.isEmpty && serverImageUrls.isEmpty
                       ? const Center(child: Text("기프티콘이 없습니다"))
                       : GridView.builder(
-                          itemCount: gifticonImages.length,
+                          itemCount: serverImageUrls.length + gifticonImages.length,
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
                             crossAxisSpacing: 4,
                             mainAxisSpacing: 4,
                           ),
                           itemBuilder: (context, index) {
-                            return FutureBuilder<Uint8List?>(
-                              future: gifticonImages[index].thumbnailDataWithSize(
-                                const ThumbnailSize(500, 500),
-                              ),
-                              builder: (_, snapshot) {
-                                if (snapshot.connectionState == ConnectionState.waiting) {
-                                  return const Center(child: CircularProgressIndicator());
-                                } else if (snapshot.hasData) {
-                                  return GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => GifticonViewer(
-                                            asset: gifticonImages[index],
+                            if (index < serverImageUrls.length) {
+                              // 서버에서 가져온 이미지 처리
+                              return Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  color: Colors.grey.shade200,
+                                ),
+                                clipBehavior: Clip.hardEdge,
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: Image.network(
+                                    serverImageUrls[index],
+                                    fit: BoxFit.cover,
+                                    alignment: Alignment.topCenter,
+                                    errorBuilder: (_, __, ___) =>
+                                        const Icon(Icons.image_not_supported),
+                                  ),
+                                ),
+                              );
+                            } else {
+                              // 로컬 갤러리에서 가져온 이미지 처리
+                              final assetIndex = index - serverImageUrls.length;
+                              return FutureBuilder<Uint8List?>(
+                                future: gifticonImages[assetIndex]
+                                    .thumbnailDataWithSize(const ThumbnailSize(500, 500)),
+                                builder: (_, snapshot) {
+                                  if (snapshot.connectionState == ConnectionState.waiting) {
+                                    return const Center(child: CircularProgressIndicator());
+                                  } else if (snapshot.hasData) {
+                                    return GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => GifticonViewer(
+                                              asset: gifticonImages[assetIndex],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(8),
+                                          color: Colors.grey.shade200,
+                                        ),
+                                        clipBehavior: Clip.hardEdge,
+                                        child: AspectRatio(
+                                          aspectRatio: 1,
+                                          child: Image.memory(
+                                            snapshot.data!,
+                                            fit: BoxFit.cover,
+                                            alignment: Alignment.topCenter,
                                           ),
                                         ),
-                                      );
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(8),
-                                        color: Colors.grey.shade200,
                                       ),
-                                      clipBehavior: Clip.hardEdge,
-                                      child: AspectRatio(
-                                        aspectRatio: 1,
-                                        child: Image.memory(
-                                          snapshot.data!,
-                                          fit: BoxFit.cover,
-                                          alignment: Alignment.topCenter,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  return const Icon(Icons.image_not_supported);
-                                }
-                              },
-                            );
+                                    );
+                                  } else {
+                                    return const Icon(Icons.image_not_supported);
+                                  }
+                                },
+                              );
+                            }
                           },
                         ),
-                ),
+                )
+
               ],
             ),
           ),
