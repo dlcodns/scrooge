@@ -4,6 +4,8 @@ import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
 import 'dart:convert';
+
+import 'group.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -77,7 +79,13 @@ class ImageDetailPage extends StatelessWidget {
 
       if (response.statusCode == 200) {
         Fluttertoast.showToast(msg: "사용 완료로 처리되었습니다.");
-        Navigator.pop(context);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Group(),
+          ),
+        );
+
       } else {
         Fluttertoast.showToast(msg: "처리 실패: ${response.statusCode}");
       }

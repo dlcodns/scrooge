@@ -132,31 +132,60 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
     });
   }
 
-  
+  Set<String> _usedGifticonIds = {};
 
 
-  Future<void> _fetchGifticons() async {
+  Future<void> _fetchUsedGifticonIds() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwtToken') ?? '';
 
-    final url = Uri.parse('http://172.30.1.54:8080/api/group/${widget.groupId}/group_gifticons');
+    final url = Uri.parse('$baseUrl/api/mypage/trash/me');
     final response = await http.get(url, headers: {
       'Authorization': 'Bearer $token',
     });
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
-      final gifticons = jsonList.map((json) => GroupGifticon.fromJson(json)).toList();
+      setState(() {
+        _usedGifticonIds = jsonList.map((e) => e['gifticonId'].toString()).toSet();
+      });
+    } else {
+      print('❌ 사용 완료 기프티콘 불러오기 실패: ${response.body}');
+    }
+  }
+
+
+
+  Future<void> _fetchGifticons() async {
+    await _fetchUsedGifticonIds(); // ✅ 먼저 사용 완료된 ID들부터 불러오기
+
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+
+    final url = Uri.parse('$baseUrl/api/group/${widget.groupId}/group_gifticons');
+    final response = await http.get(url, headers: {
+      'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = json.decode(response.body);
+      final allGifticons = jsonList.map((json) => GroupGifticon.fromJson(json)).toList();
+
+      // ✅ 사용 완료된 기프티콘 제외
+      final visibleGifticons = allGifticons.where(
+        (g) => !_usedGifticonIds.contains(g.gifticonId),
+      ).toList();
 
       setState(() {
-        _gifticons = gifticons;
+        _gifticons = visibleGifticons;
       });
 
-      _groupGifticonsByDate(gifticons); // ✅ 꼭 호출!
+      _groupGifticonsByDate(visibleGifticons);
     } else {
       print('❌ Error loading gifticons: ${response.body}');
     }
   }
+
 
   String formatDateKey(String rawKey) {
   try {
