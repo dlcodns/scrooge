@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> saveImageToGallery(String imageUrl) async {
   final status = await Permission.photos.request(); // Android 13 이상
@@ -52,6 +53,14 @@ class ImageDetailPage extends StatelessWidget {
   });
 
   Future<void> markAsUsed(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("jwtToken");
+
+    if (token == null) {
+      Fluttertoast.showToast(msg: "로그인이 필요합니다.");
+      return;
+    }
+
     final url = Uri.parse("http://172.30.1.54:8080/api/mypage/trash");
 
     try {
@@ -59,7 +68,7 @@ class ImageDetailPage extends StatelessWidget {
         url,
         headers: {
           "Content-Type": "application/json",
-          // "Authorization": "Bearer YOUR_TOKEN", // 필요한 경우 추가
+          "Authorization": "Bearer $token",
         },
         body: jsonEncode({
           "gifticonId": gifticonId,
