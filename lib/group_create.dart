@@ -11,6 +11,7 @@ class GroupCreateStep1 extends StatefulWidget {
   State<GroupCreateStep1> createState() => _GroupCreateStep1State();
 }
 
+
 class _GroupCreateStep1State extends State<GroupCreateStep1> {
   List<String> selectedFriends = [];
   final List<String> friends = ["송영은", "박형우", "이채운", "홍길동", "이무진", "하하"];

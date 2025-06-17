@@ -57,13 +57,33 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
   List<GroupGifticon> _gifticons = [];
   Map<String, List<GroupGifticon>> _groupedGifticons = {};
 
-  final List<String> members = ["박형우", "송영은"];
+  List<String> members = [];
+
+  Future<void> _loadGroupMembers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken') ?? '';
+
+    final url = Uri.parse('$baseUrl/api/group/${widget.groupId}/members');
+    final response = await http.get(url, headers: {
+      'Authorization': 'Bearer $token',
+    });
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonList = json.decode(response.body);
+      setState(() {
+        members = jsonList.map((e) => e['nickname'].toString()).toList();
+      });
+    } else {
+      print('멤버 로드 실패: ${response.body}');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _loadGroupName();
     _fetchGifticons();
+    _loadGroupMembers();
   }
 
   Future<void> _loadGroupName() async {
