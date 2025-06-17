@@ -120,59 +120,43 @@ class _TimeState extends State<Time> {
 
 
 
-  Future<void> _sendGifticonToServer(String text) async {
-    debugPrint("🧪 OCR 추출 내용:\n$text");
-
+  Future<void> _sendGifticonToServer(String text, File imageFile) async {
     final brand = getTextAfterKeyword(text, "교환처");
     final rawDueDate = getTextAfterKeyword(text, "유효기간");
     final dueDateStr = normalizeDate(rawDueDate);
     final orderNumber = extractGifticonNumber(text);
 
-
-
-    debugPrint("➡️ 추출 결과 확인:");
-    debugPrint("- brand: $brand");
-    debugPrint("- dueDate: $dueDateStr");
-    debugPrint("- orderNumber: $orderNumber");
-
     if (brand == null || dueDateStr == null || orderNumber == null) return;
 
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwtToken'); // 토큰만 사용
-
-    if (token == null) {
-      debugPrint("❌ JWT 토큰 없음");
-      return;
-    }
+    final token = prefs.getString('jwtToken');
+    if (token == null) return;
 
     final url = Uri.parse('http://172.30.1.54:8080/api/gifticon');
-    final response = await http.post(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-      body: jsonEncode({
+    final request = http.MultipartRequest('POST', url)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..fields['data'] = jsonEncode({
         "gifticonNumber": orderNumber,
         "brand": brand,
         "dueDate": dueDateStr,
-      }),
-    );
+      })
+      ..files.add(await http.MultipartFile.fromPath('file', imageFile.path));
 
-    if (response.statusCode == 200 || response.statusCode == 201) {
+    final response = await request.send();
+
+    if (response.statusCode == 200) {
       gifticonSummaries.add(
-        // 사람이 보기 좋게 정리된 문자열
         "${gifticonSummaries.length + 1}번 기프티콘:\n"
         "- gifticonNumber: $orderNumber\n"
         "- brand: $brand\n"
-        "- dueDate: $dueDateStr"
+        "- dueDate: $dueDateStr",
       );
-      debugPrint("✅ 서버 저장 성공: ${gifticonSummaries.last}");
-    }
-    else {
-      debugPrint("❌ 서버 저장 실패: ${response.statusCode} / ${response.body}");
+      debugPrint("✅ 서버 저장 성공");
+    } else {
+      debugPrint("❌ 서버 저장 실패: ${response.statusCode}");
     }
   }
+
 
 
   Future<String> _callGoogleVisionAPI(Uint8List imageBytes) async {
@@ -238,7 +222,7 @@ class _TimeState extends State<Time> {
 
         if (extractedText.contains("교환처") || extractedText.contains("유효기간") || extractedText.contains("주문번호")) {
           resultImages.add(image);
-          await _sendGifticonToServer(extractedText);
+          await _sendGifticonToServer(extractedText, file);
 
         }
       }

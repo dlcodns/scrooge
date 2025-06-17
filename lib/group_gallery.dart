@@ -14,6 +14,8 @@ class GroupGalleryPage extends StatefulWidget {
   State<GroupGalleryPage> createState() => _GroupGalleryPageState();
 }
 
+const String baseUrl = 'http://172.30.1.54:8080';
+
 class GroupGifticon {
   final String gifticonId;
   final String title;
@@ -28,14 +30,24 @@ class GroupGifticon {
   });
 
   factory GroupGifticon.fromJson(Map<String, dynamic> json) {
+    final rawImageUrl = json['imageUrl'];
+    if (rawImageUrl == null) {
+      throw Exception("imageUrl is missing in response: $json");
+    }
+
+    final fullImageUrl = rawImageUrl.startsWith('http')
+        ? rawImageUrl
+        : '$baseUrl$rawImageUrl';
+
     return GroupGifticon(
-      gifticonId: json['gifticonId'],
-      title: json['title'],
-      imageUrl: json['imageUrl'],
-      expiredAt: DateTime.parse(json['expiredAt']),
+      gifticonId: json['gifticonNumber'] ?? '', 
+      title: json['brand'] ?? '제목 없음',
+      imageUrl: fullImageUrl,
+      expiredAt: DateTime.parse(json['dueDate']),
     );
   }
 }
+
 
 class _GroupGalleryPageState extends State<GroupGalleryPage> {
   bool isGridView = true;
@@ -76,19 +88,14 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
     Map<String, List<GroupGifticon>> grouped = {};
 
     for (var gifticon in gifticons) {
-      final key = "\${gifticon.expiredAt.month}월 \${gifticon.expiredAt.day}일 만료";
+      final key = "${gifticon.expiredAt.year}-${gifticon.expiredAt.month.toString().padLeft(2, '0')}-${gifticon.expiredAt.day.toString().padLeft(2, '0')} 만료";
       if (!grouped.containsKey(key)) {
         grouped[key] = [];
       }
       grouped[key]!.add(gifticon);
     }
 
-    final sortedKeys = grouped.keys.toList()
-      ..sort((a, b) {
-        final dateA = DateTime.parse("2025-" + a.replaceAll("월 ", "-").replaceAll("일 만료", ""));
-        final dateB = DateTime.parse("2025-" + b.replaceAll("월 ", "-").replaceAll("일 만료", ""));
-        return dateA.compareTo(dateB);
-      });
+    final sortedKeys = grouped.keys.toList()..sort(); // 날짜 순 정렬
 
     setState(() {
       _groupedGifticons = {
@@ -96,6 +103,8 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
       };
     });
   }
+  
+
 
   Future<void> _fetchGifticons() async {
     final prefs = await SharedPreferences.getInstance();
@@ -120,6 +129,14 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
     }
   }
 
+  String formatDateKey(String rawKey) {
+  try {
+    final date = DateTime.parse(rawKey.replaceAll(" 만료", ""));
+    return "${date.month}월 ${date.day}일 만료";
+  } catch (_) {
+    return rawKey;
+  }
+}
 
 
   void _openGifticonSelectPage() async {
@@ -177,7 +194,8 @@ class _GroupGalleryPageState extends State<GroupGalleryPage> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(entry.key, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(formatDateKey(entry.key), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+
                     const SizedBox(height: 8),
                     isGridView
                         ? Wrap(

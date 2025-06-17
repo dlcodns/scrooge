@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:image_gallery_saver_plus/image_gallery_saver_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:typed_data';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-Future<void> saveImageToGallery(String assetPath) async {
+Future<void> saveImageToGallery(String imageUrl) async {
   final status = await Permission.photos.request(); // Android 13 이상
   final legacyStatus = await Permission.storage.request(); // Android 12 이하
 
@@ -17,25 +16,28 @@ Future<void> saveImageToGallery(String assetPath) async {
   }
 
   try {
-    final ByteData bytes = await rootBundle.load(assetPath);
-    final Uint8List list = bytes.buffer.asUint8List();
+    final response = await http.get(Uri.parse(imageUrl));
+    if (response.statusCode == 200) {
+      final result = await ImageGallerySaverPlus.saveImage(
+        Uint8List.fromList(response.bodyBytes),
+        name: "gifticon_${DateTime.now().millisecondsSinceEpoch}",
+        isReturnImagePathOfIOS: true,
+        quality: 100,
+      );
 
-    final result = await ImageGallerySaverPlus.saveImage(
-      list,
-      name: "gifticon_${DateTime.now().millisecondsSinceEpoch}",
-      isReturnImagePathOfIOS: true,
-      quality: 100,
-    );
-
-    if (result['isSuccess'] == true || result['filePath'] != null) {
-      Fluttertoast.showToast(msg: "이미지가 갤러리에 저장되었습니다");
+      if (result['isSuccess'] == true || result['filePath'] != null) {
+        Fluttertoast.showToast(msg: "이미지가 갤러리에 저장되었습니다");
+      } else {
+        Fluttertoast.showToast(msg: "이미지 저장에 실패했습니다");
+      }
     } else {
-      Fluttertoast.showToast(msg: "이미지 저장에 실패했습니다");
+      Fluttertoast.showToast(msg: "이미지 다운로드 실패");
     }
   } catch (e) {
     Fluttertoast.showToast(msg: "오류 발생: ${e.toString()}");
   }
 }
+
 
 class ImageDetailPage extends StatelessWidget {
   final String imagePath;
@@ -99,7 +101,7 @@ class ImageDetailPage extends StatelessWidget {
           children: [
             Expanded(
               child: InteractiveViewer(
-                child: Image.asset(imagePath, fit: BoxFit.contain),
+                child: Image.network(imagePath, fit: BoxFit.contain),
               ),
             ),
             const SizedBox(height: 16),
