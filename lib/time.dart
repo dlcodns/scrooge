@@ -85,6 +85,7 @@ class _TimeState extends State<Time> {
   Future<void> _fetchMyGifticons() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwtToken');
+    final loginId = prefs.getString('loginId'); // 👈 여기 중요!
 
     if (token == null) return;
 
@@ -95,12 +96,20 @@ class _TimeState extends State<Time> {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = jsonDecode(response.body);
+      debugPrint('📦 응답 데이터: ${response.body}');
       setState(() {
-        serverImageUrls = data.map((e) {
-          final url = e['imageUrl'];
-          return url.startsWith('http') ? url : 'http://172.30.1.54:8080$url';
-        }).cast<String>().toList();
+        serverImageUrls = data
+            .where((e) => e['poster_user_id'] == loginId) // 👈 정확한 비교
+            .map((e) {
+              final url = e['imageUrl'];
+              return url.startsWith('http') ? url : 'http://172.30.1.54:8080$url';
+            })
+            .cast<String>()
+            .toList();
       });
+
+
+
     }
   }
 
